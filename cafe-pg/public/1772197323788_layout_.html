@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOTVS | Café System - Empréstimos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --protheus-cyan: #00bcd4;
+            --protheus-cyan-dark: #0097a7;
+            --protheus-header: #00acc1;
+            --protheus-blue: #1976d2;
+            --protheus-grid-odd: #f5f5f5;
+            --protheus-grid-even: #ffffff;
+            --protheus-grid-header: #00acc1;
+            --protheus-border: #e0e0e0;
+            --protheus-text: #333;
+            --protheus-text-light: #666;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #fafafa;
+            color: var(--protheus-text);
+        }
+        
+        /* ============ BARRA SUPERIOR AZUL TURQUESA ============ */
+        .top-bar {
+            background: linear-gradient(180deg, var(--protheus-cyan) 0%, var(--protheus-cyan-dark) 100%);
+            color: white;
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .top-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .breadcrumb {
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .top-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-size: 12px;
+        }
+        
+        .top-info {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .top-icons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .top-icon {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: background 0.2s;
+        }
+        
+        .top-icon:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        /* ============ TÍTULO DA TELA ============ */
+        .page-title {
+            background: white;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--protheus-border);
+            font-size: 16px;
+            font-weight: 400;
+            color: var(--protheus-text);
+        }
+        
+        /* ============ BARRA DE FERRAMENTAS ============ */
+        .toolbar {
+            background: white;
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--protheus-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .toolbar-left {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .toolbar-right {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .btn-protheus {
+            padding: 7px 16px;
+            border: 1px solid #ccc;
+            background: linear-gradient(180deg, #ffffff 0%, #f0f0f0 100%);
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            color: var(--protheus-text);
+        }
+        
+        .btn-protheus:hover {
+            background: linear-gradient(180deg, #f0f0f0 0%, #e0e0e0 100%);
+            border-color: #999;
+        }
+        
+        .btn-protheus:active {
+            background: #e0e0e0;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+        }
+        
+        .btn-protheus i {
+            font-size: 12px;
+        }
+        
+        .btn-primary-protheus {
+            background: linear-gradient(180deg, var(--protheus-cyan) 0%, var(--protheus-cyan-dark) 100%);
+            color: white;
+            border-color: var(--protheus-cyan-dark);
+        }
+        
+        .btn-primary-protheus:hover {
+            background: linear-gradient(180deg, var(--protheus-cyan-dark) 0%, #00838f 100%);
+        }
+        
+        .dropdown-arrow {
+            margin-left: 5px;
+            font-size: 10px;
+        }
+        
+        /* ============ ÁREA DO GRID ============ */
+        .grid-area {
+            background: white;
+            margin: 0;
+            height: calc(100vh - 160px);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .grid-container {
+            flex: 1;
+            overflow: auto;
+        }
+        
+        /* ============ GRID ESTILO PROTHEUS ============ */
+        .grid-protheus {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        
+        .grid-protheus thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .grid-protheus th {
+            background: var(--protheus-grid-header);
+            color: white;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 500;
+            font-size: 12px;
+            border-right: 1px solid rgba(255,255,255,0.2);
+            white-space: nowrap;
+        }
+        
+        .grid-protheus th:first-child {
+            width: 40px;
+            text-align: center;
+        }
+        
+        .grid-protheus th .sort-icon {
+            margin-left: 5px;
+            font-size: 10px;
+            opacity: 0.7;
+        }
+        
+        .grid-protheus td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--protheus-border);
+            border-right: 1px solid #f0f0f0;
+        }
+        
+        .grid-protheus tbody tr {
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        
+        .grid-protheus tbody tr:nth-child(odd) {
+            background: var(--protheus-grid-odd);
+        }
+        
+        .grid-protheus tbody tr:nth-child(even) {
+            background: var(--protheus-grid-even);
+        }
+        
+        .grid-protheus tbody tr:hover {
+            background: #e3f2fd !important;
+        }
+        
+        .grid-protheus tbody tr.selected {
+            background: #b3e5fc !important;
+        }
+        
+        .grid-protheus td:first-child {
+            text-align: center;
+        }
+        
+        /* ============ CHECKBOX VERDE PROTHEUS ============ */
+        .checkbox-protheus {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #4caf50;
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+            background: white;
+            transition: all 0.2s;
+        }
+        
+        .checkbox-protheus:checked {
+            background: #4caf50;
+        }
+        
+        .checkbox-protheus:checked::after {
+            content: '✓';
+            position: absolute;
+            top: -2px;
+            left: 2px;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        /* ============ RODAPÉ COM LOGO PROTHEUS ============ */
+        .footer {
+            background: white;
+            border-top: 1px solid var(--protheus-border);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--protheus-text-light);
+        }
+        
+        .footer-left {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .logo-protheus {
+            background: var(--protheus-cyan);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+        
+        /* ============ BARRA DE PESQUISA ============ */
+        .search-box {
+            display: flex;
+            align-items: center;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            padding: 5px 10px;
+            background: white;
+            min-width: 300px;
+        }
+        
+        .search-box input {
+            border: none;
+            outline: none;
+            flex: 1;
+            font-size: 13px;
+            padding: 0 5px;
+        }
+        
+        .search-box i {
+            color: #999;
+            font-size: 13px;
+        }
+        
+        /* ============ MODAL ============ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-overlay.show {
+            display: flex;
+        }
+        
+        .modal-protheus {
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            max-width: 700px;
+            width: 90%;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-header-protheus {
+            background: var(--protheus-grid-header);
+            color: white;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+        }
+        
+        .modal-body-protheus {
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group-protheus {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .form-label-protheus {
+            font-size: 12px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        .form-control-protheus {
+            padding: 7px 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+        
+        .form-control-protheus:focus {
+            outline: none;
+            border-color: var(--protheus-cyan);
+            box-shadow: 0 0 0 2px rgba(0, 188, 212, 0.1);
+        }
+        
+        .modal-footer-protheus {
+            padding: 15px 20px;
+            background: #f5f5f5;
+            border-top: 1px solid var(--protheus-border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- BARRA SUPERIOR AZUL TURQUESA -->
+    <div class="top-bar">
+        <div class="top-bar-left">
+            <div class="breadcrumb">
+                <i class="fas fa-coffee"></i> TOTVS | Café System
+            </div>
+        </div>
+        <div class="top-bar-right">
+            <div class="top-info">
+                <span>TOTVS Centralização e Projetos M5504_P12</span>
+            </div>
+            <div class="top-info">
+                <span>Administrador</span>
+            </div>
+            <div class="top-icons">
+                <div class="top-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="top-icon">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <div class="top-icon">
+                    <i class="fas fa-question-circle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- TÍTULO DA TELA -->
+    <div class="page-title">
+        Controle de Empréstimos de Café
+    </div>
+    
+    <!-- BARRA DE FERRAMENTAS -->
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <button class="btn-protheus btn-primary-protheus" onclick="openModal()">
+                <i class="fas fa-plus"></i>
+                Incluir
+            </button>
+            <button class="btn-protheus">
+                <i class="fas fa-edit"></i>
+                Alterar
+            </button>
+            <button class="btn-protheus">
+                Outras Ações
+                <i class="fas fa-caret-down dropdown-arrow"></i>
+            </button>
+        </div>
+        <div class="toolbar-right">
+            <button class="btn-protheus">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="search-box">
+                <input type="text" placeholder="Pesquisar">
+                <i class="fas fa-search"></i>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ÁREA DO GRID -->
+    <div class="grid-area">
+        <div class="grid-container">
+            <table class="grid-protheus">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>
+                            Código
+                            <i class="fas fa-sort sort-icon"></i>
+                        </th>
+                        <th>
+                            Cliente
+                            <i class="fas fa-sort sort-icon"></i>
+                        </th>
+                        <th>
+                            Data Empréstimo
+                            <i class="fas fa-sort sort-icon"></i>
+                        </th>
+                        <th>
+                            Vencimento
+                            <i class="fas fa-sort sort-icon"></i>
+                        </th>
+                        <th>
+                            Capital
+                            <i class="fas fa-sort sort-icon"></i>
+                        </th>
+                        <th>
+                            Juros %
+                            <i class="fas fa-sort sort-icon"></i>
+                        </th>
+                        <th>
+                            Total
+                            <i class="fas fa-sort sort-icon"></i>
+                        </th>
+                        <th>
+                            Situação
+                            <i class="fas fa-sort sort-icon"></i>
+                        </th>
+                        <th>
+                            Observações
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ondblclick="openModal()">
+                        <td><input type="checkbox" class="checkbox-protheus"></td>
+                        <td>000001</td>
+                        <td>LEANDRO LOPES</td>
+                        <td>01/02/2026</td>
+                        <td>15/02/2026</td>
+                        <td>10 sc 0 kg</td>
+                        <td>25%</td>
+                        <td>12 sc 30 kg</td>
+                        <td>Ativo</td>
+                        <td>Empréstimo inicial</td>
+                    </tr>
+                    <tr ondblclick="openModal()">
+                        <td><input type="checkbox" class="checkbox-protheus"></td>
+                        <td>000002</td>
+                        <td>JESSICA ABREU</td>
+                        <td>02/02/2026</td>
+                        <td>16/02/2026</td>
+                        <td>15 sc 0 kg</td>
+                        <td>25%</td>
+                        <td>18 sc 45 kg</td>
+                        <td>Vencido</td>
+                        <td>-</td>
+                    </tr>
+                    <tr ondblclick="openModal()">
+                        <td><input type="checkbox" class="checkbox-protheus"></td>
+                        <td>000003</td>
+                        <td>MONICA SOUZA</td>
+                        <td>03/02/2026</td>
+                        <td>17/02/2026</td>
+                        <td>8 sc 30 kg</td>
+                        <td>25%</td>
+                        <td>10 sc 37 kg</td>
+                        <td>Ativo</td>
+                        <td>Cliente preferencial</td>
+                    </tr>
+                    <tr ondblclick="openModal()">
+                        <td><input type="checkbox" class="checkbox-protheus"></td>
+                        <td>000004</td>
+                        <td>MATHEUS SILVA</td>
+                        <td>04/02/2026</td>
+                        <td>18/02/2026</td>
+                        <td>12 sc 0 kg</td>
+                        <td>25%</td>
+                        <td>15 sc 0 kg</td>
+                        <td>Quitado</td>
+                        <td>-</td>
+                    </tr>
+                    <tr ondblclick="openModal()">
+                        <td><input type="checkbox" class="checkbox-protheus"></td>
+                        <td>000005</td>
+                        <td>Instrutor Lima</td>
+                        <td>05/02/2026</td>
+                        <td>19/02/2026</td>
+                        <td>20 sc 0 kg</td>
+                        <td>25%</td>
+                        <td>25 sc 0 kg</td>
+                        <td>Ativo</td>
+                        <td>Grande quantidade</td>
+                    </tr>
+                    <tr ondblclick="openModal()">
+                        <td><input type="checkbox" class="checkbox-protheus"></td>
+                        <td>000006</td>
+                        <td>Jailton</td>
+                        <td>06/02/2026</td>
+                        <td>20/02/2026</td>
+                        <td>5 sc 30 kg</td>
+                        <td>25%</td>
+                        <td>6 sc 52 kg</td>
+                        <td>Ativo</td>
+                        <td>-</td>
+                    </tr>
+                    <tr ondblclick="openModal()">
+                        <td><input type="checkbox" class="checkbox-protheus"></td>
+                        <td>000007</td>
+                        <td>Carlos</td>
+                        <td>07/02/2026</td>
+                        <td>21/02/2026</td>
+                        <td>18 sc 0 kg</td>
+                        <td>25%</td>
+                        <td>22 sc 30 kg</td>
+                        <td>Ativo</td>
+                        <td>Pagamento parcelado</td>
+                    </tr>
+                    <tr ondblclick="openModal()">
+                        <td><input type="checkbox" class="checkbox-protheus"></td>
+                        <td>000008</td>
+                        <td>Marcos</td>
+                        <td>08/02/2026</td>
+                        <td>22/02/2026</td>
+                        <td>7 sc 15 kg</td>
+                        <td>25%</td>
+                        <td>9 sc 3 kg</td>
+                        <td>Parcial</td>
+                        <td>Já devolveu parte</td>
+                    </tr>
+                    <tr ondblclick="openModal()">
+                        <td><input type="checkbox" class="checkbox-protheus"></td>
+                        <td>000009</td>
+                        <td>PEDRO SANTOS</td>
+                        <td>09/02/2026</td>
+                        <td>23/02/2026</td>
+                        <td>25 sc 0 kg</td>
+                        <td>25%</td>
+                        <td>31 sc 15 kg</td>
+                        <td>Ativo</td>
+                        <td>-</td>
+                    </tr>
+                    <tr ondblclick="openModal()">
+                        <td><input type="checkbox" class="checkbox-protheus"></td>
+                        <td>000010</td>
+                        <td>ANA COSTA</td>
+                        <td>10/02/2026</td>
+                        <td>24/02/2026</td>
+                        <td>13 sc 45 kg</td>
+                        <td>25%</td>
+                        <td>17 sc 16 kg</td>
+                        <td>Ativo</td>
+                        <td>Primeiro empréstimo</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- RODAPÉ -->
+    <div class="footer">
+        <div class="footer-left">
+            <span>Registros: 237</span>
+            <span>|</span>
+            <span>Selecionados: 0</span>
+        </div>
+        <div class="logo-protheus">
+            PROTHEUS
+        </div>
+    </div>
+    
+    <!-- MODAL -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal-protheus">
+            <div class="modal-header-protheus">
+                <span>Cadastro de Empréstimo</span>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body-protheus">
+                <div class="form-row">
+                    <div class="form-group-protheus" style="grid-column: 1 / -1;">
+                        <label class="form-label-protheus">Cliente *</label>
+                        <select class="form-control-protheus">
+                            <option>Selecione...</option>
+                            <option>LEANDRO LOPES</option>
+                            <option>JESSICA ABREU</option>
+                            <option>MONICA SOUZA</option>
+                            <option>MATHEUS SILVA</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group-protheus">
+                        <label class="form-label-protheus">Data Empréstimo *</label>
+                        <input type="date" class="form-control-protheus">
+                    </div>
+                    <div class="form-group-protheus">
+                        <label class="form-label-protheus">Data Vencimento *</label>
+                        <input type="date" class="form-control-protheus">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group-protheus">
+                        <label class="form-label-protheus">Capital - Sacas *</label>
+                        <input type="number" class="form-control-protheus" min="0">
+                    </div>
+                    <div class="form-group-protheus">
+                        <label class="form-label-protheus">Capital - Kg</label>
+                        <input type="number" class="form-control-protheus" min="0" max="59" value="0">
+                    </div>
+                    <div class="form-group-protheus">
+                        <label class="form-label-protheus">Juros % *</label>
+                        <input type="number" class="form-control-protheus" min="0" step="0.1">
+                    </div>
+                    <div class="form-group-protheus">
+                        <label class="form-label-protheus">Total</label>
+                        <input type="text" class="form-control-protheus" readonly style="background: #f0f0f0;">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group-protheus" style="grid-column: 1 / -1;">
+                        <label class="form-label-protheus">Observações</label>
+                        <textarea class="form-control-protheus" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer-protheus">
+                <button class="btn-protheus" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                </button>
+                <button class="btn-protheus btn-primary-protheus">
+                    <i class="fas fa-check"></i>
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Modal
+        function openModal() {
+            document.getElementById('modal').classList.add('show');
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').classList.remove('show');
+        }
+        
+        // Seleção de linhas
+        document.querySelectorAll('.grid-protheus tbody tr').forEach(row => {
+            row.addEventListener('click', function(e) {
+                if (e.target.type !== 'checkbox') {
+                    document.querySelectorAll('.grid-protheus tbody tr').forEach(r => r.classList.remove('selected'));
+                    this.classList.add('selected');
+                }
+            });
+        });
+        
+        // Contador de selecionados
+        document.querySelectorAll('.checkbox-protheus').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const count = document.querySelectorAll('.checkbox-protheus:checked').length;
+                document.querySelector('.footer-left span:nth-child(3)').textContent = `Selecionados: ${count}`;
+            });
+        });
+    </script>
+</body>
+</html>
