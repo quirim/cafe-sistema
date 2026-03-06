@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TOTVS | Cafe System</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --cyan:#00bcd4;--cyan-dark:#0097a7;--hdr:#00acc1;
+  --border:#e0e0e0;--odd:#f5f5f5;--even:#fff;--text:#333;
+}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:#fafafa;color:var(--text);display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* TOP BAR */
+.top-bar{background:linear-gradient(180deg,var(--cyan),var(--cyan-dark));color:#fff;padding:8px 15px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;box-shadow:0 2px 4px rgba(0,0,0,.1)}
+.top-bar-right{display:flex;align-items:center;gap:20px;font-size:12px}
+.db-dot{width:8px;height:8px;border-radius:50%;background:#ffeb3b;display:inline-block;margin-right:4px;vertical-align:middle}
+.db-dot.ok{background:#4caf50}.db-dot.erro{background:#f44336}
+.top-icon{width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:3px}
+.top-icon:hover{background:rgba(255,255,255,.2)}
+
+/* ABAS */
+.nav-tabs{background:#fff;border-bottom:2px solid var(--cyan);display:flex;gap:2px;padding:0 15px;flex-shrink:0}
+.nav-tab{padding:10px 22px;font-size:13px;cursor:pointer;border-radius:4px 4px 0 0;color:#666;border:1px solid transparent;border-bottom:none;margin-bottom:-2px;transition:all .2s}
+.nav-tab:hover{background:#e0f7fa;color:var(--cyan-dark)}
+.nav-tab.active{background:#fff;color:var(--cyan-dark);border-color:var(--cyan);border-bottom-color:#fff;font-weight:600}
+
+/* PAGES */
+.page{display:none;flex-direction:column;flex:1;overflow:hidden}
+.page.active{display:flex}
+
+/* TOOLBAR */
+.toolbar{background:#fff;padding:10px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.toolbar-left{display:flex;gap:8px;flex-wrap:wrap}
+.toolbar-right{display:flex;gap:8px;align-items:center}
+
+/* BUTTONS */
+.btn{padding:7px 16px;border:1px solid #ccc;background:linear-gradient(180deg,#fff,#f0f0f0);border-radius:3px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;color:var(--text);white-space:nowrap;transition:all .2s}
+.btn:hover{background:linear-gradient(180deg,#f0f0f0,#e0e0e0);border-color:#999}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-primary{background:linear-gradient(180deg,var(--cyan),var(--cyan-dark));color:#fff;border-color:var(--cyan-dark)}
+.btn-primary:hover{background:linear-gradient(180deg,var(--cyan-dark),#00838f)}
+.btn-green{background:linear-gradient(180deg,#43a047,#2e7d32);color:#fff;border-color:#2e7d32}
+.btn-danger{background:linear-gradient(180deg,#ef5350,#c62828);color:#fff;border-color:#c62828}
+.btn-purple{background:linear-gradient(180deg,#7b1fa2,#4a148c);color:#fff;border-color:#4a148c}
+
+/* DROPDOWN */
+.drop-wrap{position:relative}
+.drop-menu{display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #ccc;border-radius:3px;box-shadow:0 4px 10px rgba(0,0,0,.15);z-index:200;min-width:180px}
+.drop-menu.show{display:block}
+.drop-item{padding:8px 14px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--text)}
+.drop-item:hover{background:#f0f0f0}
+.drop-item.danger{color:#c62828}
+
+/* SEARCH */
+.search-box{display:flex;align-items:center;border:1px solid #ccc;border-radius:3px;padding:5px 10px;background:#fff;min-width:300px}
+.search-box input{border:none;outline:none;flex:1;font-size:13px;padding:0 5px}
+
+/* GRID */
+.grid-wrap{flex:1;overflow:auto}
+.g{width:100%;border-collapse:collapse;font-size:13px}
+.g thead{position:sticky;top:0;z-index:10}
+.g th{background:var(--hdr);color:#fff;padding:10px 12px;text-align:left;font-weight:500;font-size:12px;border-right:1px solid rgba(255,255,255,.2);white-space:nowrap}
+.g th.hdr-dark{background:#005f6e}
+.g td{padding:8px 12px;border-bottom:1px solid var(--border);border-right:1px solid #f0f0f0;font-size:13px}
+.g tbody tr{cursor:pointer}
+.g tbody tr:nth-child(odd){background:var(--odd)}
+.g tbody tr:nth-child(even){background:var(--even)}
+.g tbody tr:hover{background:#e3f2fd!important}
+.g tbody tr.selected{background:#b3e5fc!important}
+.g td:first-child{width:40px;text-align:center}
+.empty td{text-align:center;padding:30px;color:#aaa}
+
+/* SPINNER */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid #ddd;border-top-color:var(--cyan);border-radius:50%;animation:spin .8s linear infinite;margin-right:6px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* BADGE */
+.badge{padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap}
+.bd{background:#fce4ec;color:#880e4f;border:1px solid #f48fb1}
+.bc{background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7}
+.ba{background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7}
+.bv{background:#ffebee;color:#c62828;border:1px solid #ef9a9a}
+.bq{background:#e3f2fd;color:#1565c0;border:1px solid #90caf9}
+
+/* FOOTER */
+.footer{background:#fff;border-top:1px solid var(--border);padding:10px 20px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#666;flex-shrink:0}
+.footer-left{display:flex;gap:15px}
+.logo-p{background:var(--cyan);color:#fff;padding:8px 20px;border-radius:20px;font-weight:700;font-size:14px;letter-spacing:1px}
+
+/* MODAL */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center}
+.ov.show{display:flex}
+.modal{background:#fff;border-radius:4px;box-shadow:0 5px 20px rgba(0,0,0,.3);width:90%;max-height:92vh;overflow:hidden;display:flex;flex-direction:column}
+.mhd{background:var(--hdr);color:#fff;padding:12px 20px;font-size:14px;font-weight:500;display:flex;justify-content:space-between;align-items:center}
+.mcl{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;line-height:1}
+.mbd{padding:20px;overflow-y:auto}
+.mft{padding:12px 18px;background:#f5f5f5;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.frow{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:15px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg.full{grid-column:1/-1}
+label{font-size:12px;color:#555;font-weight:500}
+input,select,textarea{padding:7px 10px;border:1px solid #ccc;border-radius:3px;font-size:13px;font-family:inherit;width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,188,212,.15)}
+input[readonly]{background:#f5f5f5;color:#555}
+.ftotal{font-weight:700;color:var(--cyan-dark);background:#f0fffe}
+.saldo-box{background:#f0fffe;border:1px solid #b2ebf2;border-radius:4px;padding:10px 14px;margin-bottom:15px}
+.saldo-box h4{font-size:11px;color:#555;margin-bottom:6px;text-transform:uppercase}
+.saldo-vals{display:flex;gap:20px;font-size:13px;flex-wrap:wrap}
+.saldo-vals strong{color:var(--cyan-dark)}
+
+/* TOAST */
+.toast{position:fixed;bottom:18px;right:18px;padding:10px 18px;border-radius:4px;color:#fff;font-size:13px;font-weight:500;z-index:9999;box-shadow:0 3px 10px rgba(0,0,0,.2);animation:slideIn .3s ease}
+.toast.success{background:#2e7d32}.toast.error{background:#c62828}.toast.warn{background:#e65100}
+@keyframes slideIn{from{transform:translateX(80px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+.via{background:#fff;border:1px solid #ccc;border-radius:4px;padding:24px 28px;font-family:'Courier New',monospace;font-size:12px;max-width:580px;margin:0 auto}
+.via-header{text-align:center;border-bottom:2px solid #333;padding-bottom:12px;margin-bottom:12px}
+.via-header h2{font-size:17px;font-weight:bold;color:#00838f}
+.via-header p{font-size:10px;color:#888;margin-top:3px}
+.via-titulo{text-align:center;font-weight:bold;letter-spacing:2px;text-transform:uppercase;border:1px solid #aaa;padding:5px;margin-bottom:10px;font-size:11px}
+.via-num{text-align:center;font-size:10px;color:#aaa;margin-bottom:10px}
+.via table{width:100%;border-collapse:collapse;font-size:12px}
+.via table td{padding:4px 2px;vertical-align:top}
+.via table td:first-child{color:#666;width:44%;white-space:nowrap}
+.via table td:last-child{font-weight:600;color:#222}
+.capital-box{background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:10px;margin:12px 0;text-align:center}
+.capital-box .val{font-size:16px;font-weight:bold;color:#5a3e00}
+.capital-box .lbl{font-size:10px;color:#856404;margin-top:2px}
+.total-row td{background:#fff8e1;font-weight:700!important}
+.total-row td:last-child{font-size:14px!important;color:#c62828!important}
+.assinaturas{margin-top:24px;display:flex;justify-content:space-around;font-size:11px;text-align:center}
+.assinaturas div{border-top:1px solid #333;padding-top:4px;min-width:140px}
+.rodape{margin-top:12px;border-top:1px dashed #bbb;padding-top:8px;font-size:10px;color:#aaa;text-align:center}
+.corte{text-align:center;margin:10px auto;font-size:11px;color:#aaa;letter-spacing:3px}
+
+/* RELATORIOS - MODELO 4 */
+.rel-wrap{padding:28px 36px;background:#fff;font-family:'Segoe UI',sans-serif}
+.rel-topo{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #333;padding-bottom:14px;margin-bottom:14px}
+.rel-empresa h2{font-size:18px;font-weight:700;color:#00838f}
+.rel-empresa p{font-size:11px;color:#666;margin-top:3px}
+.rel-info{text-align:right;font-size:11px;color:#555;line-height:1.8}
+.rel-titulo-doc{text-align:center;font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;padding:8px;background:#f5f5f5;border:1px solid #ddd}
+.rel-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:20px}
+.rel-table th{border:1px solid #333;padding:7px 10px;background:#f0f0f0;text-align:left;font-size:11px;font-weight:600}
+.rel-table td{border:1px solid #ddd;padding:7px 10px;vertical-align:middle}
+.rel-table tfoot td{border:1px solid #333;background:#e8e8e8;font-weight:700}
+.rel-assin{display:flex;justify-content:space-around;margin-top:40px;font-size:11px;text-align:center}
+.rel-assin div{border-top:1px solid #333;padding-top:6px;min-width:160px}
+.rel-rodape{margin-top:16px;border-top:1px dashed #bbb;padding-top:8px;font-size:10px;color:#aaa;text-align:center}
+.status-d{background:#fce4ec;color:#c62828;border:1px solid #f48fb1;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700}
+.status-c{background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700}
+.status-v{background:#fff3e0;color:#e65100;border:1px solid #ffcc80;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700}
+
+
+/* Cafe grid row height */
+#gridCafe tr { height: 42px; }
+#gridCafe td { vertical-align: middle; }
+
+@media print {
+  @page { size: A4; margin: 10mm 12mm; }
+
+  /* --- COMPROVANTE --- */
+  body.print-comp * { visibility: hidden; }
+  body.print-comp #printArea,
+  body.print-comp #printArea * { visibility: visible; }
+  body.print-comp #printArea {
+    position: fixed; left: 0; top: 0;
+    width: 100%; padding: 10mm;
+    background: #fff;
+  }
+
+  /* --- RELATORIO --- */
+  body.print-rel .top-bar,
+  body.print-rel .nav-tabs,
+  body.print-rel .toolbar,
+  body.print-rel .footer,
+  body.print-rel #page-cafe,
+  body.print-rel #page-dinheiro,
+  body.print-rel #page-clientes { display: none !important; }
+
+  /* hide everything except relatorio area */
+  body.print-rel * { display: none !important; }
+  body.print-rel #areaRelatorio,
+  body.print-rel #areaRelatorio * { display: revert !important; }
+  body.print-rel #areaRelatorio {
+    position: fixed !important;
+    top: 0 !important; left: 0 !important;
+    width: 100% !important;
+    overflow: visible !important;
+    background: #fff !important;
+    padding: 0 !important;
+  }
+  body.print-rel .rel-wrap { padding: 0; }
+  body.print-rel .rel-table { width: 100%; border-collapse: collapse; }
+  body.print-rel .rel-table th,
+  body.print-rel .rel-table td { font-size: 9.5px; padding: 4px 6px; }
+  body.print-rel .rel-table tr { page-break-inside: avoid; }
+  body.print-rel .rel-table thead { display: table-header-group; }
+
+  .no-print { display: none !important; }
+}
+
+
+/* DASHBOARD */
+.dash-card{background:#fff;border-radius:6px;border:1px solid #e0e0e0;padding:20px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;}
+.dash-val{font-size:22px;font-weight:700;color:#333;}
+.dash-lbl{font-size:12px;color:#888;}
+.dash-icon{font-size:24px;margin-bottom:4px;}
+
+/* PAGINACAO MODELO A */
+.pg-btn { width:30px;height:30px;border:1px solid #ddd;border-radius:3px;background:#fff;
+  font-size:12px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  color:#555;transition:all .15s; }
+.pg-btn:hover:not(:disabled){background:#e0f7fa;border-color:#00acc1;color:#00838f;}
+.pg-btn:disabled{opacity:.35;cursor:default;}
+.pg-btn.pg-active{background:#00acc1;color:#fff;border-color:#00838f;font-weight:700;}
+.pg-dots{font-size:12px;color:#aaa;padding:0 2px;line-height:30px;}
+.pg-sel{padding:4px 6px;border:1px solid #ddd;border-radius:3px;font-size:11px;
+  color:#555;margin-left:6px;cursor:pointer;}
+}
+
+@media print {
+  @page { size: A4 portrait; margin: 10mm 12mm; }
+
+  /* COMPROVANTE */
+  body.print-comp * { visibility: hidden; }
+  body.print-comp #printArea,
+  body.print-comp #printArea * { visibility: visible; }
+  body.print-comp #printArea {
+    position: fixed; left: 0; top: 0;
+    width: 100%; padding: 10mm; background: #fff;
+  }
+
+  /* RELATORIO */
+  body.print-rel .top-bar,
+  body.print-rel .nav-tabs,
+  body.print-rel .toolbar,
+  body.print-rel .footer { display: none !important; }
+  body.print-rel #page-cafe,
+  body.print-rel #page-dinheiro,
+  body.print-rel #page-clientes { display: none !important; }
+  body.print-rel #page-relatorios { display: block !important; height: auto !important; overflow: visible !important; }
+  body.print-rel #areaRelatorio { overflow: visible !important; height: auto !important; background: #fff !important; padding: 0 !important; }
+  body.print-rel .rel-wrap { padding: 0; }
+  body.print-rel .rel-table th,
+  body.print-rel .rel-table td { font-size: 10px !important; padding: 5px 7px !important; }
+
+  .no-print { display: none !important; }
+}
+
+
+/* DASHBOARD */
+.dash-card{background:#fff;border-radius:6px;border:1px solid #e0e0e0;padding:20px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;}
+.dash-val{font-size:22px;font-weight:700;color:#333;}
+.dash-lbl{font-size:12px;color:#888;}
+.dash-icon{font-size:24px;margin-bottom:4px;}
+
+/* PAGINACAO MODELO A */
+.pg-btn { width:30px;height:30px;border:1px solid #ddd;border-radius:3px;background:#fff;
+  font-size:12px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  color:#555;transition:all .15s; }
+.pg-btn:hover:not(:disabled){background:#e0f7fa;border-color:#00acc1;color:#00838f;}
+.pg-btn:disabled{opacity:.35;cursor:default;}
+.pg-btn.pg-active{background:#00acc1;color:#fff;border-color:#00838f;font-weight:700;}
+.pg-dots{font-size:12px;color:#aaa;padding:0 2px;line-height:30px;}
+.pg-sel{padding:4px 6px;border:1px solid #ddd;border-radius:3px;font-size:11px;
+  color:#555;margin-left:6px;cursor:pointer;}
+}
+
+#tblListPag td { padding: 12px 14px; vertical-align: middle; }
+#tblListPag th { padding: 12px 14px; }
+
+/* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 768px) {
+
+  /* Top bar compacto */
+  .top-bar { padding: 8px 12px; font-size: 12px; }
+  .top-bar span:not(:first-child) { display: none; }
+  #dbStatus { display: none; }
+
+  /* Abas: scroll horizontal */
+  .nav-tabs { overflow-x: auto; flex-wrap: nowrap; padding: 0 8px; gap: 0; -webkit-overflow-scrolling: touch; }
+  .nav-tab { padding: 8px 14px; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+
+  /* Toolbar: empilha botões */
+  .toolbar { padding: 8px 10px; flex-wrap: wrap; gap: 6px; }
+  .toolbar-left { flex-wrap: wrap; gap: 6px; width: 100%; }
+  .toolbar-right { width: 100%; gap: 6px; }
+  .toolbar-right .search-box { flex: 1; }
+  .toolbar-right .search-box input { width: 100%; }
+  .toolbar-right select { flex: 1; }
+  .btn { font-size: 12px; padding: 6px 10px; }
+
+  /* Grid: scroll horizontal em tabelas */
+  .grid-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .g { min-width: 0; width: 100%; font-size: 11px; }
+  .g th { padding: 6px 6px; font-size: 10px; white-space: nowrap; }
+  .g td { padding: 5px 6px; white-space: nowrap; overflow: hidden; max-width: 120px; text-overflow: ellipsis; }
+  .g td small { font-size: 9px; }
+
+  /* Esconder colunas menos importantes em mobile */
+  .col-hide-mobile { display: none !important; }
+
+  /* Checkbox column menor */
+  .g th:first-child, .g td:first-child { width: 24px; padding: 5px 4px; }
+
+  /* Saldo e situação em negrito compacto */
+  .g td b { font-size: 11px; }
+
+  /* Footer: empilha */
+  .footer { flex-wrap: wrap; gap: 4px; padding: 6px 10px; font-size: 11px; }
+  .footer-left { flex-wrap: wrap; gap: 6px; }
+  .logo-p { display: none; }
+
+  /* Paginação: compacta */
+  #footerPagCafe, #footerPagDin { font-size: 11px; }
+  .pg-btn { width: 26px; height: 26px; font-size: 11px; }
+
+  /* Modal: tela cheia no celular */
+  .ov { padding: 0; align-items: flex-end; }
+  .modal {
+    max-width: 100% !important;
+    width: 100% !important;
+    border-radius: 12px 12px 0 0 !important;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .mbd { padding: 12px; }
+  .mhd { padding: 12px 16px; }
+  .mft { padding: 10px 12px; }
+
+  /* Formulários: 1 coluna */
+  .frow { flex-wrap: wrap; }
+  .fg { min-width: 100% !important; }
+  .fg.full { min-width: 100% !important; }
+  .finput, select.finput { font-size: 16px; } /* evita zoom no iOS */
+  input[type="text"], input[type="number"], input[type="date"], textarea, select {
+    font-size: 16px !important; /* previne zoom automático iOS */
+  }
+
+  /* Dashboard: 2 colunas no mobile */
+  #dashCards { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+  .dash-val { font-size: 16px; }
+
+  /* Relatórios: scroll */
+  .rel-wrap { overflow-x: auto; }
+  .rel-table { min-width: 500px; font-size: 11px; }
+  .rel-topo { flex-direction: column; gap: 8px; }
+
+  /* Comprovante: ajuste */
+  .via { padding: 12px; }
+  .via-header h2 { font-size: 14px; }
+
+  /* Drop menu: posição */
+  .drop-menu { right: 0; left: auto; }
+
+  /* Botão de ação flutuante no footer do dinheiro */
+  .footer-pag { flex-wrap: wrap; gap: 6px; }
+}
+
+@media (max-width: 768px) {
+  /* Card row no mobile */
+  .mob-card-row td { border-bottom: 1px solid #e0e0e0; }
+  .mob-card-row.selected td { background: #e0f7fa; }
+  /* Esconder thead no mobile quando usa cards */
+  .hide-mobile-head { display: none; }
+}
+
+@media (max-width: 480px) {
+  #dashCards { grid-template-columns: 1fr !important; }
+  .nav-tab { font-size: 11px; padding: 6px 10px; }
+  .nav-tab i { display: none; }
+}
+
+</style>
+</head>
+<body>
+<!-- TOP BAR -->
+<div class="top-bar">
+  <span style="font-size:13px;font-weight:500"><i class="fas fa-coffee"></i> TOTVS | Cafe System</span>
+  <div class="top-bar-right">
+    <span><span class="db-dot" id="dbDot"></span><span id="dbStatus">Conectando...</span></span>
+    <span>Emprestimos&amp;Safra</span>
+    <span id="topUsuario" style="opacity:.85"></span>
+    <div style="display:flex;gap:6px;align-items:center">
+      <div class="top-icon" onclick="recarregarTudo()" title="Atualizar"><i class="fas fa-sync-alt"></i></div>
+      <div class="top-icon" onclick="fazerBackup()" title="Backup dos dados"><i class="fas fa-database"></i></div>
+      <div class="top-icon" onclick="abrirTrocarSenha()" title="Trocar senha"><i class="fas fa-key"></i></div>
+      <div class="top-icon" onclick="fazerLogout()" title="Sair" style="color:#ffcdd2"><i class="fas fa-sign-out-alt"></i></div>
+    </div>
+  </div>
+</div>
+
+<!-- ABAS -->
+<div class="nav-tabs">
+  <div class="nav-tab active" id="tab-dashboard" onclick="trocarAba('dashboard')"><i class="fas fa-tachometer-alt"></i> Dashboard</div>
+  <div class="nav-tab" id="tab-cafe" onclick="trocarAba('cafe')"><i class="fas fa-coffee"></i> Cafe - Emprestimos</div>
+  <div class="nav-tab" id="tab-dinheiro" onclick="trocarAba('dinheiro')"><i class="fas fa-dollar-sign"></i> Dinheiro - Emprestimos</div>
+  <div class="nav-tab" id="tab-clientes" onclick="trocarAba('clientes')"><i class="fas fa-users"></i> Clientes</div>
+  <div class="nav-tab" id="tab-relatorios" onclick="trocarAba('relatorios')"><i class="fas fa-chart-bar"></i> Relatórios</div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;overflow:hidden" id="pages-wrapper">
+
+<!-- ===== ABA DASHBOARD ===== -->
+<div class="page active" id="page-dashboard">
+  <div style="padding:24px;background:#f5f5f5;flex:1;overflow-y:auto">
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px" id="dashCards">
+      <div class="dash-card" style="border-top:3px solid #00acc1">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div><div class="dash-lbl">Saldo Café</div><div class="dash-val" id="dshCafeKg" style="color:#00acc1">—</div></div>
+          <div style="width:46px;height:46px;background:#e0f7fa;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:#00acc1"><i class="fas fa-coffee"></i></div>
+        </div>
+        <div style="font-size:11px;color:#aaa;margin-top:8px" id="dshCafeSub">—</div>
+      </div>
+      <div class="dash-card" style="border-top:3px solid #1565c0">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div><div class="dash-lbl">Capital Emprestado</div><div class="dash-val" id="dshCapital" style="color:#1565c0">—</div></div>
+          <div style="width:46px;height:46px;background:#e3f2fd;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:#1565c0"><i class="fas fa-file-invoice-dollar"></i></div>
+        </div>
+        <div style="font-size:11px;color:#aaa;margin-top:8px" id="dshCapitalSub">—</div>
+      </div>
+      <div class="dash-card" style="border-top:3px solid #43a047">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div><div class="dash-lbl">Total Recebido</div><div class="dash-val" id="dshPago" style="color:#43a047">—</div></div>
+          <div style="width:46px;height:46px;background:#e8f5e9;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:#43a047"><i class="fas fa-hand-holding-usd"></i></div>
+        </div>
+        <div style="font-size:11px;color:#aaa;margin-top:8px" id="dshPagoSub">—</div>
+      </div>
+      <div class="dash-card" style="border-top:3px solid #7b1fa2">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div><div class="dash-lbl">Total de Clientes</div><div class="dash-val" id="dshClientes" style="color:#7b1fa2">—</div></div>
+          <div style="width:46px;height:46px;background:#f3e5f5;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:#7b1fa2"><i class="fas fa-users"></i></div>
+        </div>
+        <div style="font-size:11px;color:#aaa;margin-top:8px" id="dshClientesSub">—</div>
+      </div>
+      <div class="dash-card" style="border-top:3px solid #e53935">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div><div class="dash-lbl">Vencidos</div><div class="dash-val" id="dshVencidos" style="color:#e53935">—</div></div>
+          <div style="width:46px;height:46px;background:#ffebee;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:#e53935"><i class="fas fa-exclamation-triangle"></i></div>
+        </div>
+        <div style="font-size:11px;color:#aaa;margin-top:8px" id="dshVencSub">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ABA CAFE ===== -->
+<div class="page" id="page-cafe">
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <button class="btn btn-primary" onclick="abrirMovModal('D',null)"><i class="fas fa-plus"></i> Emprestimo</button>
+      <button class="btn btn-green"   onclick="abrirMovModal('C',null)"><i class="fas fa-undo"></i> Devolucao</button>
+      <button class="btn" id="btnEditCafe" disabled onclick="editarMovSel()"><i class="fas fa-edit"></i> Alterar</button>
+      <button class="btn btn-purple" id="btnComp" disabled onclick="gerarComprovante()"><i class="fas fa-print"></i> Comprovante</button>
+      <div class="drop-wrap">
+        <button class="btn" onclick="toggleDrop('dropCafe')">Acoes <i class="fas fa-caret-down"></i></button>
+        <div class="drop-menu" id="dropCafe">
+          <div class="drop-item" onclick="exportarCSV()"><i class="fas fa-file-csv"></i> Exportar CSV</div>
+          <hr style="margin:4px 0;border-color:#eee">
+          <div class="drop-item danger" onclick="excluirMov()"><i class="fas fa-trash"></i> Excluir</div>
+        </div>
+      </div>
+    </div>
+    <div class="toolbar-right">
+      <input type="date" id="cafeDe" class="btn" style="width:130px" title="Data de" onchange="paginaCafe=1;carregarCafe(1)">
+      <input type="date" id="cafeAte" class="btn" style="width:130px" title="Data até" onchange="paginaCafe=1;carregarCafe(1)">
+      <button class="btn" onclick="document.getElementById('cafeDe').value='';document.getElementById('cafeAte').value='';paginaCafe=1;carregarCafe(1)" title="Limpar datas"><i class="fas fa-times"></i></button>
+      <div class="search-box">
+        <input type="text" id="searchCafe" placeholder="Pesquisar cliente..." oninput="filtrarCafe()" autocomplete="off">
+        <i class="fas fa-search"></i>
+      </div>
+    </div>
+  </div>
+  <div class="grid-wrap">
+    <table class="g">
+      <thead class="hide-mobile-head"><tr>
+        <th style="width:40px;text-align:center"></th>
+        <th>Cod.</th>
+        <th>Tipo</th>
+        <th>Observacoes</th>
+        <th>Cliente</th>
+        <th>Data</th>
+        <th>Vencimento</th>
+        <th>Sacas / Kg</th>
+        <th>Juros %</th>
+        <th>Juros Sc/Kg</th>
+        <th class="hdr-dark">Saldo Linha</th>
+      </tr></thead>
+      <tbody id="gridCafe">
+        <tr class="empty"><td colspan="11"><span class="spinner"></span>Carregando...</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="background:#fff;border-top:1px solid var(--border);padding:8px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+    <div id="footerPagCafe"></div>
+    <div class="footer-left" style="font-size:12px;color:#666">
+      <span id="ftTotal">Registros: 0</span>
+      <span>|</span>
+      <span id="ftClientes">Clientes c/ saldo: 0</span>
+      <span>|</span>
+      <span style="color:#c62828" id="ftVenc">Vencidos: 0</span>
+    </div>
+    <div class="logo-p">PROTHEUS</div>
+  </div>
+</div>
+
+<!-- ===== ABA DINHEIRO ===== -->
+<div class="page" id="page-dinheiro">
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <button class="btn btn-primary" onclick="abrirDinModal(null)"><i class="fas fa-plus"></i> Novo Emprestimo</button>
+      <button class="btn btn-green" id="btnPagarDin" disabled onclick="abrirPagModal()"><i class="fas fa-money-bill-wave"></i> Registrar Pagamento</button>
+      <button class="btn" id="btnEditDin" disabled onclick="editarDinSel()"><i class="fas fa-edit"></i> Alterar</button>
+      <button class="btn" id="btnVerPag" disabled onclick="verPagamentos()"><i class="fas fa-list"></i> Ver Pagamentos</button>
+      <button class="btn" style="background:#25d366;border-color:#128c7e;color:#fff" onclick="avisarVencimentosWhatsApp()"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+      <div class="drop-wrap">
+        <button class="btn" onclick="toggleDrop('dropDin')">Acoes <i class="fas fa-caret-down"></i></button>
+        <div class="drop-menu" id="dropDin">
+          <div class="drop-item" onclick="exportarCSVDin()"><i class="fas fa-file-csv"></i> Exportar CSV</div>
+          <div class="drop-item" onclick="exportarExcelDin()"><i class="fas fa-file-excel"></i> Exportar Excel</div>
+          <div class="drop-item danger" onclick="excluirDin()"><i class="fas fa-trash"></i> Excluir</div>
+        </div>
+      </div>
+    </div>
+    <div class="toolbar-right">
+      <select id="filtroSitDin" class="btn" style="min-width:140px" onchange="paginaDin=1;carregarDin(1)">
+        <option value="">Todas situações</option>
+        <option value="A">Aberto</option>
+        <option value="Q">Quitado</option>
+        <option value="V">Vencido</option>
+      </select>
+      <div class="search-box">
+        <input type="text" id="searchDin" placeholder="Pesquisar cliente..." oninput="filtrarDin()" autocomplete="off">
+        <i class="fas fa-search"></i>
+      </div>
+    </div>
+  </div>
+  <div class="grid-wrap">
+    <table class="g">
+      <thead class="hide-mobile-head"><tr>
+        <th style="width:40px;text-align:center"></th>
+        <th class="col-hide-mobile">Cod.</th>
+        <th>Cliente</th>
+        <th class="col-hide-mobile">Descrição</th>
+        <th class="col-hide-mobile">Data</th>
+        <th>Vencimento</th>
+        <th>Capital</th>
+        <th class="col-hide-mobile">Juros %</th>
+        <th>Pago</th>
+        <th>Situação</th>
+      </tr></thead>
+      <tbody id="gridDin">
+        <tr class="empty"><td colspan="12"><span class="spinner"></span>Carregando...</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="background:#fff;border-top:1px solid var(--border);padding:8px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+    <div id="footerPagDin"></div>
+    <div style="display:flex;gap:12px;font-size:12px;color:#666">
+      <span id="ftDinTotal">Registros: 0</span>
+      <span>|</span>
+      <span style="color:#c62828" id="ftDinSaldo">Saldo Total: R$ 0,00</span>
+      <span>|</span>
+      <span style="color:#e65100" id="ftDinVenc">Vencidos: 0</span>
+    </div>
+    <div class="logo-p">PROTHEUS</div>
+  </div>
+</div>
+
+<!-- ===== ABA CLIENTES ===== -->
+<div class="page" id="page-clientes">
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <button class="btn btn-primary" onclick="abrirCliModal(null)"><i class="fas fa-user-plus"></i> Novo Cliente</button>
+      <button class="btn" id="btnEditCli" disabled onclick="editarCliSel()"><i class="fas fa-edit"></i> Alterar</button>
+      <button class="btn btn-danger" id="btnDelCli" disabled onclick="excluirCli()"><i class="fas fa-user-times"></i> Desativar</button>
+    </div>
+    <div class="toolbar-right">
+      <div class="search-box">
+        <input type="text" id="searchCli" placeholder="Pesquisar nome ou CPF..." oninput="filtrarCli()">
+        <i class="fas fa-search"></i>
+      </div>
+    </div>
+  </div>
+  <div class="grid-wrap">
+    <table class="g">
+      <thead><tr>
+        <th style="width:40px;text-align:center"></th>
+        <th>Cod.</th><th>Nome</th><th>CPF/CNPJ</th><th>Telefone</th><th>E-mail</th><th>Endereco</th><th>Status</th>
+      </tr></thead>
+      <tbody id="gridCli">
+        <tr class="empty"><td colspan="8"><span class="spinner"></span>Carregando...</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="footer">
+    <div class="footer-left"><span id="ftCliTotal">Clientes: 0</span></div>
+    <div class="logo-p">PROTHEUS</div>
+  </div>
+</div>
+
+<!-- ===== ABA RELATORIOS ===== -->
+<div class="page" id="page-relatorios">
+  <div style="background:#fff;border-bottom:1px solid #e0e0e0;flex-shrink:0">
+    <!-- Linha 1: botões dos relatórios -->
+    <div style="padding:8px 12px;display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid #f0f0f0">
+      <button class="btn btn-primary" onclick="mostrarRel('devedores')"><i class="fas fa-users"></i> Devedores Café</button>
+      <button class="btn btn-primary" onclick="mostrarRel('historico')"><i class="fas fa-history"></i> Histórico Café</button>
+      <button class="btn" style="background:#e8f5e9;border-color:#a5d6a7;color:#2e7d32" onclick="mostrarRel('devedoresDin')"><i class="fas fa-dollar-sign"></i> Devedores Dinheiro</button>
+      <button class="btn" style="background:#e8f5e9;border-color:#a5d6a7;color:#2e7d32" onclick="mostrarRel('historicoDin')"><i class="fas fa-history"></i> Histórico Dinheiro</button>
+      <button class="btn" style="background:#fff3e0;border-color:#ffb74d;color:#e65100" onclick="mostrarRel('pagJuros')"><i class="fas fa-hand-holding-usd"></i> Pagamentos de Juros</button>
+      <button class="btn" style="background:#fce4ec;border-color:#f48fb1;color:#c62828" onclick="mostrarRel('vencimentos')"><i class="fas fa-calendar-times"></i> Vencimentos</button>
+    </div>
+    <!-- Linha 2: filtros dinâmicos -->
+    <div style="padding:8px 12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-height:44px">
+      <!-- Filtros Vencimentos -->
+      <div id="filtrosVenc" style="display:none;flex-wrap:wrap;align-items:center;gap:6px">
+        <select id="relVencDias" class="btn" style="min-width:150px">
+          <option value="7">Próximos 7 dias</option>
+          <option value="15">Próximos 15 dias</option>
+          <option value="30">Próximos 30 dias</option>
+          <option value="60">Próximos 60 dias</option>
+          <option value="0">Todos vencidos</option>
+        </select>
+        <button class="btn btn-primary" style="background:#c62828;border-color:#b71c1c" onclick="carregarVencimentos()"><i class="fas fa-search"></i> Buscar</button>
+      </div>
+      <!-- Filtros Pagamentos de Juros -->
+      <div id="filtrosPagJuros" style="display:none;flex-wrap:wrap;align-items:center;gap:6px">
+        <select id="relPagJurisCli" class="btn" style="min-width:160px;max-width:200px">
+          <option value="">Todos os clientes</option>
+        </select>
+        <input type="number" id="relPagJurisEmp" class="btn" style="width:100px" placeholder="ID Emp." min="1">
+        <input type="date" id="relPagJurisDe" class="btn" style="width:130px">
+        <input type="date" id="relPagJurisAte" class="btn" style="width:130px">
+        <button class="btn btn-primary" style="background:#e65100;border-color:#bf360c" onclick="carregarPagJuros()"><i class="fas fa-search"></i> Buscar</button>
+      </div>
+      <!-- Filtros Devedores Dinheiro -->
+      <div id="filtrosDin" style="display:none;flex-wrap:wrap;align-items:center;gap:6px">
+        <select id="relSitDin" class="btn" style="min-width:130px">
+          <option value="">Todas situações</option>
+          <option value="A">Aberto</option>
+          <option value="V">Vencido</option>
+          <option value="Q">Quitado</option>
+        </select>
+        <input type="date" id="relDinDe" class="btn" style="width:130px">
+        <input type="date" id="relDinAte" class="btn" style="width:130px">
+        <button class="btn btn-primary" onclick="carregarDevedoresDin()"><i class="fas fa-search"></i> Buscar</button>
+      </div>
+      <!-- Seletores de cliente -->
+      <select id="relClienteSel" class="btn" style="min-width:200px;display:none" onchange="carregarHistorico()">
+        <option value="">Selecione o cliente...</option>
+      </select>
+      <select id="relClienteSelDin" class="btn" style="min-width:200px;display:none" onchange="carregarHistoricoDin()">
+        <option value="">Selecione o cliente...</option>
+      </select>
+      <button class="btn" id="btnImprimirRel" style="display:none" onclick="imprimirRelatorio()"><i class="fas fa-print"></i> Imprimir</button>
+    </div>
+  </div>
+  <div class="grid-wrap" id="areaRelatorio" style="padding:20px;background:#f5f5f5">
+    <div style="text-align:center;padding:60px;color:#aaa">
+      <i class="fas fa-chart-bar" style="font-size:48px;margin-bottom:12px;display:block"></i>
+      Selecione um relatório acima
+    </div>
+  </div>
+  <div class="footer">
+    <div class="footer-left"><span id="ftRelInfo"></span></div>
+    <div class="logo-p">PROTHEUS</div>
+  </div>
+</div>
+
+</div>
+<!-- /pages-wrapper -->
+
+<!-- MODAL LISTA PAGAMENTOS -->
+<div class="ov" id="modalListPag">
+  <div class="modal" style="max-width:600px">
+    <div class="mhd"><span id="ttlListPag">Pagamentos</span><button class="mcl" onclick="fechar('modalListPag')">&#215;</button></div>
+    <div class="mbd" style="padding:0">
+      <table style="width:100%;border-collapse:collapse;font-size:13px" id="tblListPag">
+        <thead><tr style="background:#00acc1;color:#fff;height:42px">
+          <th style="padding:10px 12px;width:60px">Nº</th>
+          <th style="padding:10px 12px">Data</th>
+          <th style="padding:10px 12px">Valor</th>
+          <th style="padding:10px 12px">Descrição</th>
+          <th style="padding:10px 12px;width:80px;text-align:center">Ação</th>
+        </tr></thead>
+        <tbody id="bodyPag" style="font-size:13px"><tr><td colspan="5" style="text-align:center;padding:20px;color:#aaa">Carregando...</td></tr></tbody>
+      </table>
+    </div>
+    <div class="mft no-print">
+      <button class="btn" onclick="fechar('modalListPag')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR PAGAMENTO -->
+<div class="ov" id="modalEditPag">
+  <div class="modal" style="max-width:400px">
+    <div class="mhd"><span><i class="fas fa-edit"></i> Editar Pagamento</span><button class="mcl" onclick="fechar('modalEditPag')">&#215;</button></div>
+    <div class="mbd">
+      <input type="hidden" id="editPagId">
+      <div class="frow"><label>Data</label><input type="date" id="editPagData" class="finput"></div>
+      <div class="frow"><label>Valor (R$)</label><input type="number" id="editPagValor" class="finput" step="0.01" min="0"></div>
+      <div class="frow"><label>Descrição</label><input type="text" id="editPagDesc" class="finput" placeholder="Opcional"></div>
+    </div>
+    <div class="mft">
+      <button class="btn" onclick="fechar('modalEditPag')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarEdicaoPag()"><i class="fas fa-save"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CAFE -->
+<div class="ov" id="modalMov">
+  <div class="modal" style="max-width:640px">
+    <div class="mhd"><span id="ttlMov">Incluir Emprestimo</span><button class="mcl" onclick="fechar('modalMov')">&#215;</button></div>
+    <div class="mbd">
+      <input type="hidden" id="movId">
+      <div class="frow">
+        <div class="fg"><label>Tipo *</label>
+          <select id="movTipo" onchange="onTipoChange()">
+            <option value="D">D — Empréstimo</option>
+            <option value="C">C — Devolução</option>
+          </select>
+        </div>
+      </div>
+      <div class="frow"><div class="fg full"><label>Cliente *</label><select id="movCli" onchange="carregarSaldo()"><option value="">Selecione...</option></select></div></div>
+      <div class="saldo-box" id="saldoBox" style="display:none">
+        <h4><i class="fas fa-balance-scale"></i> Saldo devedor atual</h4>
+        <div class="saldo-vals"><span>Sacas: <strong id="sldSc">0</strong></span><span>Kg: <strong id="sldKg">0</strong></span><span>Situacao: <strong id="sldSit">-</strong></span></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Data do Movimento *</label><input type="date" id="movData"></div>
+        <div class="fg" id="grpVenc"><label>Vencimento</label><input type="date" id="movVenc"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Sacas *</label><input type="number" id="movSc" min="0" value="0" oninput="calcMovTotal()"></div>
+        <div class="fg"><label>Kg avulso (0-59)</label><input type="number" id="movKg" min="0" max="59" value="0" oninput="calcMovTotal()"></div>
+        <div class="fg" id="grpJuros"><label>Juros %</label><input type="number" id="movJuros" min="0" step="0.1" value="25" oninput="calcMovTotal()"></div>
+        <div class="fg"><label>Total a Devolver</label><input type="text" id="movTotal" class="ftotal" readonly></div>
+      </div>
+      <div class="frow"><div class="fg full"><label>Observacao</label><textarea id="movObs" rows="3"></textarea></div></div>
+    </div>
+    <div class="mft">
+      <button class="btn" onclick="fechar('modalMov')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarMov()"><i class="fas fa-check"></i> Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL COMPROVANTE -->
+<div class="ov" id="modalComp">
+  <div class="modal" style="max-width:660px">
+    <div class="mhd"><span><i class="fas fa-print"></i> Comprovante de Empréstimo de Café</span><button class="mcl" onclick="fechar('modalComp')">&#215;</button></div>
+    <div class="mbd" style="background:#e0e0e0;padding:20px">
+      <div id="printArea">
+
+        <!-- 1a VIA -->
+        <div class="via">
+          <div class="via-header">
+            <h2><i class="fas fa-coffee"></i> EMPRÉSTIMOS &amp; SAFRA</h2>
+            <p>Sistema de Controle de Empréstimos de Café</p>
+          </div>
+          <div class="via-titulo">COMPROVANTE DE EMPRÉSTIMO — 1ª VIA (CREDOR)</div>
+          <div class="via-num" id="cNum1">Nº 000000</div>
+          <table>
+            <tr><td>Cliente:</td><td id="cCliente1">—</td></tr>
+            <tr id="cDocRow1" style="display:none"><td>CPF/CNPJ:</td><td id="cDoc1">—</td></tr>
+            <tr id="cTelRow1" style="display:none"><td>Telefone:</td><td id="cTel1">—</td></tr>
+            <tr><td>Data do Empréstimo:</td><td id="cData1">—</td></tr>
+            <tr id="cVencRow1" style="display:none"><td>Vencimento:</td><td id="cVenc1" style="color:#c62828;font-weight:700">—</td></tr>
+          </table>
+          <div class="capital-box">
+            <div class="val" id="cCapital1">— sc — kg</div>
+            <div class="lbl">Capital Emprestado</div>
+          </div>
+          <table>
+            <tr><td>Juros aplicados:</td><td id="cJuros1">—</td></tr>
+            <tr><td>Juros em Sc/Kg:</td><td id="cJurosKg1">—</td></tr>
+            <tr class="total-row"><td>Total a Devolver:</td><td id="cTotal1">—</td></tr>
+            <tr><td>Saldo Linha:</td><td id="cSaldo1">—</td></tr>
+            <tr id="cObsRow1" style="display:none"><td>Observação:</td><td id="cObs1" style="font-style:italic;color:#555">—</td></tr>
+          </table>
+          <div class="assinaturas">
+            <div>________________________<br>Credor / Empresa</div>
+            <div>________________________<br>Devedor / Cliente</div>
+          </div>
+          <div class="rodape" id="cEmissao1">Emitido em: —</div>
+        </div>
+
+        <!-- LINHA DE CORTE -->
+        <div class="corte">✂ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ RECORTE ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ✂</div>
+
+        <!-- 2a VIA -->
+        <div class="via">
+          <div class="via-header">
+            <h2><i class="fas fa-coffee"></i> EMPRÉSTIMOS &amp; SAFRA</h2>
+            <p>Sistema de Controle de Empréstimos de Café</p>
+          </div>
+          <div class="via-titulo">COMPROVANTE DE EMPRÉSTIMO — 2ª VIA (CLIENTE)</div>
+          <div class="via-num" id="cNum2">Nº 000000</div>
+          <table>
+            <tr><td>Cliente:</td><td id="cCliente2">—</td></tr>
+            <tr id="cDocRow2" style="display:none"><td>CPF/CNPJ:</td><td id="cDoc2">—</td></tr>
+            <tr id="cTelRow2" style="display:none"><td>Telefone:</td><td id="cTel2">—</td></tr>
+            <tr><td>Data do Empréstimo:</td><td id="cData2">—</td></tr>
+            <tr id="cVencRow2" style="display:none"><td>Vencimento:</td><td id="cVenc2" style="color:#c62828;font-weight:700">—</td></tr>
+          </table>
+          <div class="capital-box">
+            <div class="val" id="cCapital2">— sc — kg</div>
+            <div class="lbl">Capital Emprestado</div>
+          </div>
+          <table>
+            <tr><td>Juros aplicados:</td><td id="cJuros2">—</td></tr>
+            <tr><td>Juros em Sc/Kg:</td><td id="cJurosKg2">—</td></tr>
+            <tr class="total-row"><td>Total a Devolver:</td><td id="cTotal2">—</td></tr>
+            <tr><td>Saldo Linha:</td><td id="cSaldo2">—</td></tr>
+            <tr id="cObsRow2" style="display:none"><td>Observação:</td><td id="cObs2" style="font-style:italic;color:#555">—</td></tr>
+          </table>
+          <div class="assinaturas">
+            <div>________________________<br>Credor / Empresa</div>
+            <div>________________________<br>Devedor / Cliente</div>
+          </div>
+          <div class="rodape" id="cEmissao2">Emitido em: —</div>
+        </div>
+
+      </div>
+    </div>
+    <div class="mft no-print">
+      <button class="btn" onclick="fechar('modalComp')">Fechar</button>
+      <button class="btn" style="background:#25d366;border-color:#128c7e;color:#fff" onclick="compartilharWhatsApp()"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+      <button class="btn btn-primary" onclick="document.body.classList.add('print-comp');window.print();setTimeout(function(){document.body.classList.remove('print-comp');},1000)"><i class="fas fa-print"></i> Imprimir</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL DINHEIRO -->
+<div class="ov" id="modalDin">
+  <div class="modal" style="max-width:600px">
+    <div class="mhd"><span id="ttlDin">Novo Emprestimo Dinheiro</span><button class="mcl" onclick="fechar('modalDin')">&#215;</button></div>
+    <div class="mbd">
+      <input type="hidden" id="dinId">
+      <div class="frow"><div class="fg full"><label>Cliente *</label><select id="dinCli"><option value="">Selecione...</option></select></div></div>
+      <div class="frow">
+        <div class="fg"><label>Data *</label><input type="date" id="dinData"></div>
+        <div class="fg"><label>Vencimento</label><input type="date" id="dinVenc"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Capital (R$) *</label><input type="number" id="dinCapital" min="0.01" step="0.01" oninput="calcDinTotal()"></div>
+        <div class="fg"><label>Juros %</label><input type="number" id="dinJuros" min="0" step="0.1" value="0" oninput="calcDinTotal()"></div>
+        <div class="fg"><label>Total com Juros</label><input type="text" id="dinTotal" class="ftotal" readonly></div>
+      </div>
+      <div class="frow"><div class="fg full"><label>Descricao</label><textarea id="dinDesc" rows="2"></textarea></div></div>
+      <div class="frow">
+        <div class="fg"><label>Situação</label><select id="dinSit" class="finput"><option value="A">Aberto</option><option value="Q">Quitado</option></select></div>
+      </div>
+    </div>
+    <div class="mft">
+      <button class="btn" onclick="fechar('modalDin')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarDin()"><i class="fas fa-check"></i> Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PAGAMENTO -->
+<div class="ov" id="modalPag">
+  <div class="modal" style="max-width:440px">
+    <div class="mhd"><span>Registrar Pagamento</span><button class="mcl" onclick="fechar('modalPag')">&#215;</button></div>
+    <div class="mbd">
+      <div class="saldo-box">
+        <h4>Emprestimo Selecionado</h4>
+        <div class="saldo-vals"><span>Cliente: <strong id="pagCli">-</strong></span><span>Saldo: <strong id="pagSaldo" style="color:#c62828">-</strong></span></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Data *</label><input type="date" id="pagData"></div>
+        <div class="fg"><label>Valor (R$) *</label><input type="number" id="pagValor" min="0.01" step="0.01"></div>
+      </div>
+      <div class="frow"><div class="fg full"><label>Descricao</label><input type="text" id="pagDesc"></div></div>
+    </div>
+    <div class="mft">
+      <button class="btn" onclick="fechar('modalPag')">Cancelar</button>
+      <button class="btn btn-green" onclick="salvarPag()"><i class="fas fa-check"></i> Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CLIENTE -->
+<div class="ov" id="modalCli">
+  <div class="modal" style="max-width:520px">
+    <div class="mhd"><span id="ttlCli">Cadastrar Cliente</span><button class="mcl" onclick="fechar('modalCli')">&#215;</button></div>
+    <div class="mbd">
+      <input type="hidden" id="cliId">
+      <div class="frow"><div class="fg full"><label>Nome *</label><input type="text" id="cliNome" class="finput" placeholder="Nome completo"></div></div>
+      <div class="frow">
+        <div class="fg"><label>CPF / CNPJ</label><input type="text" id="cliDoc" class="finput"></div>
+        <div class="fg"><label>Telefone</label><input type="text" id="cliTel" class="finput"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>E-mail</label><input type="text" id="cliEmail" class="finput"></div>
+      </div>
+      <div class="frow"><div class="fg full"><label>Endereço</label><input type="text" id="cliEnd" class="finput"></div></div>
+    </div>
+    <div class="mft">
+      <button class="btn" onclick="fechar('modalCli')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarCli()"><i class="fas fa-check"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ===== TELA LOGIN ===== -->
+<div id="telaLogin" style="position:fixed;inset:0;background:linear-gradient(135deg,#004d57 0%,#006064 40%,#00838f 100%);display:flex;align-items:center;justify-content:center;z-index:9999">
+  <!-- Decorative circles -->
+  <div style="position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(255,255,255,.04);top:-80px;left:-80px;pointer-events:none"></div>
+  <div style="position:absolute;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.05);bottom:-40px;right:-40px;pointer-events:none"></div>
+
+  <div style="background:#fff;border-radius:16px;padding:44px 40px 36px;width:360px;box-shadow:0 32px 80px rgba(0,0,0,.35);position:relative;z-index:1">
+    <!-- Logo -->
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="width:64px;height:64px;background:linear-gradient(135deg,#006064,#00acc1);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 8px 24px rgba(0,172,193,.35)">
+        <i class="fas fa-coffee" style="font-size:28px;color:#fff"></i>
+      </div>
+      <h2 style="font-size:20px;font-weight:700;color:#1a1a1a;margin:0 0 4px">Empréstimos &amp; Safra</h2>
+      <p style="font-size:13px;color:#9e9e9e;margin:0">Faça login para continuar</p>
+    </div>
+
+    <!-- Campos -->
+    <div style="margin-bottom:16px">
+      <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Usuário</label>
+      <div style="position:relative">
+        <i class="fas fa-user" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#bbb;font-size:14px"></i>
+        <input type="text" id="loginUser" autocomplete="off" autocapitalize="none" placeholder="Digite seu usuário"
+          onkeydown="if(event.key==='Enter')document.getElementById('loginSenha').focus()"
+          style="width:100%;padding:11px 12px 11px 36px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:14px;outline:none;transition:border-color .2s;color:#333"
+          onfocus="this.style.borderColor='#00acc1'" onblur="this.style.borderColor='#e0e0e0'">
+      </div>
+    </div>
+
+    <div style="margin-bottom:8px">
+      <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Senha</label>
+      <div style="position:relative">
+        <i class="fas fa-lock" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#bbb;font-size:14px"></i>
+        <input type="password" id="loginSenha" placeholder="Digite sua senha"
+          onkeydown="if(event.key==='Enter')fazerLogin()"
+          style="width:100%;padding:11px 40px 11px 36px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:14px;outline:none;transition:border-color .2s;color:#333"
+          onfocus="this.style.borderColor='#00acc1'" onblur="this.style.borderColor='#e0e0e0'">
+        <i id="toggleSenhaLogin" class="fas fa-eye-slash" onclick="var i=document.getElementById('loginSenha');i.type=i.type==='password'?'text':'password';this.className='fas fa-eye'+(i.type==='password'?'-slash':'')"
+          style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#bbb;font-size:14px;cursor:pointer"></i>
+      </div>
+    </div>
+
+    <!-- Erro -->
+    <div id="loginErro" style="min-height:20px;margin-bottom:8px;font-size:12px;color:#c62828;text-align:center;font-weight:500"></div>
+
+    <!-- Botão -->
+    <button onclick="fazerLogin()" id="btnEntrar"
+      style="width:100%;padding:12px;background:linear-gradient(135deg,#006064,#00acc1);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px;box-shadow:0 4px 16px rgba(0,172,193,.35);transition:opacity .2s">
+      <i class="fas fa-sign-in-alt"></i> Entrar
+    </button>
+
+    <p style="text-align:center;font-size:11px;color:#ccc;margin-top:20px;margin-bottom:0">Empréstimos &amp; Safra © 2026</p>
+  </div>
+</div>
+
+<!-- ===== TELA TROCAR SENHA ===== -->
+<div id="telaSenha" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#3a006f 0%,#6a1b9a 50%,#7b1fa2 100%);align-items:center;justify-content:center;z-index:9998">
+  <div style="position:absolute;width:280px;height:280px;border-radius:50%;background:rgba(255,255,255,.04);top:-60px;right:-60px;pointer-events:none"></div>
+  <div style="position:absolute;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.05);bottom:-30px;left:-30px;pointer-events:none"></div>
+
+  <div style="background:#fff;border-radius:16px;padding:40px 36px 32px;width:360px;box-shadow:0 32px 80px rgba(0,0,0,.4);position:relative;z-index:1">
+    <!-- Header -->
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="width:56px;height:56px;background:linear-gradient(135deg,#6a1b9a,#7b1fa2);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;box-shadow:0 8px 24px rgba(123,31,162,.4)">
+        <i class="fas fa-key" style="font-size:22px;color:#fff"></i>
+      </div>
+      <h2 style="font-size:18px;font-weight:700;color:#1a1a1a;margin:0 0 4px">Trocar Senha</h2>
+      <p style="font-size:12px;color:#9e9e9e;margin:0">Usuário: <b id="senhaUsuarioNome" style="color:#6a1b9a"></b></p>
+    </div>
+
+    <!-- Senha Atual -->
+    <div style="margin-bottom:14px">
+      <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Senha Atual</label>
+      <div style="position:relative">
+        <i class="fas fa-lock" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#bbb;font-size:13px"></i>
+        <input type="password" id="senhaAtual" placeholder="Digite a senha atual" autocomplete="current-password"
+          style="width:100%;padding:10px 38px 10px 34px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:14px;outline:none;transition:border-color .2s;color:#333"
+          onfocus="this.style.borderColor='#7b1fa2'" onblur="this.style.borderColor='#e0e0e0'">
+        <i class="fas fa-eye-slash" onclick="var i=document.getElementById('senhaAtual');i.type=i.type==='password'?'text':'password';this.className='fas fa-eye'+(i.type==='password'?'-slash':'')"
+          style="position:absolute;right:11px;top:50%;transform:translateY(-50%);color:#bbb;cursor:pointer;font-size:13px"></i>
+      </div>
+    </div>
+
+    <!-- Nova Senha -->
+    <div style="margin-bottom:6px">
+      <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Nova Senha</label>
+      <div style="position:relative">
+        <i class="fas fa-lock-open" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#bbb;font-size:13px"></i>
+        <input type="password" id="senhaNova" placeholder="Mínimo 4 caracteres" autocomplete="new-password"
+          oninput="atualizarForcaSenha(this.value)"
+          style="width:100%;padding:10px 38px 10px 34px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:14px;outline:none;transition:border-color .2s;color:#333"
+          onfocus="this.style.borderColor='#7b1fa2'" onblur="this.style.borderColor='#e0e0e0'">
+        <i class="fas fa-eye-slash" onclick="var i=document.getElementById('senhaNova');i.type=i.type==='password'?'text':'password';this.className='fas fa-eye'+(i.type==='password'?'-slash':'')"
+          style="position:absolute;right:11px;top:50%;transform:translateY(-50%);color:#bbb;cursor:pointer;font-size:13px"></i>
+      </div>
+      <!-- Barra de força -->
+      <div style="display:flex;gap:4px;margin-top:6px">
+        <div id="forca1" style="flex:1;height:4px;border-radius:2px;background:#e0e0e0;transition:background .3s"></div>
+        <div id="forca2" style="flex:1;height:4px;border-radius:2px;background:#e0e0e0;transition:background .3s"></div>
+        <div id="forca3" style="flex:1;height:4px;border-radius:2px;background:#e0e0e0;transition:background .3s"></div>
+        <div id="forca4" style="flex:1;height:4px;border-radius:2px;background:#e0e0e0;transition:background .3s"></div>
+      </div>
+      <div id="forcaTxt" style="font-size:11px;color:#aaa;margin-top:3px;min-height:14px"></div>
+    </div>
+
+    <!-- Confirmar -->
+    <div style="margin-bottom:10px">
+      <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Confirmar Nova Senha</label>
+      <div style="position:relative">
+        <i class="fas fa-check-circle" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#bbb;font-size:13px"></i>
+        <input type="password" id="senhaConf" placeholder="Repita a nova senha" autocomplete="new-password"
+          style="width:100%;padding:10px 38px 10px 34px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:14px;outline:none;transition:border-color .2s;color:#333"
+          onfocus="this.style.borderColor='#7b1fa2'" onblur="this.style.borderColor='#e0e0e0'"
+          onkeydown="if(event.key==='Enter')trocarSenha()">
+        <i class="fas fa-eye-slash" onclick="var i=document.getElementById('senhaConf');i.type=i.type==='password'?'text':'password';this.className='fas fa-eye'+(i.type==='password'?'-slash':'')"
+          style="position:absolute;right:11px;top:50%;transform:translateY(-50%);color:#bbb;cursor:pointer;font-size:13px"></i>
+      </div>
+    </div>
+
+    <!-- Erro -->
+    <div id="senhaErro" style="min-height:18px;font-size:12px;color:#c62828;font-weight:500;margin-bottom:10px;text-align:center"></div>
+
+    <!-- Botões -->
+    <button onclick="trocarSenha()"
+      style="width:100%;padding:11px;background:linear-gradient(135deg,#6a1b9a,#7b1fa2);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(123,31,162,.35);margin-bottom:8px">
+      <i class="fas fa-check"></i> Salvar Nova Senha
+    </button>
+    <button onclick="fecharTrocaSenha()"
+      style="width:100%;padding:10px;background:transparent;color:#999;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;cursor:pointer">
+      Cancelar
+    </button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
