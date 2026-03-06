@@ -34,6 +34,28 @@ app.get('/api/status', async (req, res) => {
   }
 });
 
+// Rota para criar tabelas automaticamente
+app.get('/api/setup', async (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
+    // Executa cada comando separadamente
+    const comandos = schema.split(';').map(s => s.trim()).filter(s => s.length > 10);
+    const erros = [];
+    for (const cmd of comandos) {
+      try {
+        await query(cmd);
+      } catch (e) {
+        erros.push(e.message);
+      }
+    }
+    res.json({ ok: true, mensagem: 'Setup concluído!', erros });
+  } catch (err) {
+    res.status(500).json({ ok: false, erro: err.message });
+  }
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
