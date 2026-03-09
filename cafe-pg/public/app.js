@@ -769,15 +769,34 @@ function renderCli(){
   var tbody=document.getElementById('gridCli');
   if(!lista.length){tbody.innerHTML='<tr class="empty-row"><td colspan="8">Nenhum cliente.</td></tr>';return;}
   var h='';
+  var mob=window.innerWidth<=768;
   for(var i=0;i<lista.length;i++){
-    var c=lista[i];var sel=selCli===c.cliente_id?' selected':'';
-    h+='<tr class="'+sel+'" onclick="selecionarCli('+c.cliente_id+')" ondblclick="editarCliId('+c.cliente_id+')">';
-    h+='<td><input type="checkbox" '+(selCli===c.cliente_id?'checked':'')+'></td>';
-    h+='<td>'+String(c.cliente_id).padStart(6,'0')+'</td>';
-    h+='<td><b>'+(c.nome||'')+'</b></td><td>'+(c.documento||'')+'</td><td>'+(c.telefone||'')+'</td><td>'+(c.email||'')+'</td>';
-    h+='<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">'+(c.endereco||'')+'</td>';
-    h+='<td><span class="badge '+(c.ativo?'bc':'bv')+'">'+(c.ativo?'Ativo':'Inativo')+'</span></td>';
-    h+='</tr>';
+    var c=lista[i];var sel=selCli===c.cliente_id;
+    if(mob){
+      var ativo=c.ativo!==false&&c.ativo!==0;
+      h+='<tr class="mob-card-row'+(sel?' selected':'')+'" onclick="selecionarCli('+c.cliente_id+')" ondblclick="editarCliId('+c.cliente_id+')">';
+      h+='<td colspan="8" style="padding:11px 14px">';
+      h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">';
+      h+='<span style="font-weight:700;font-size:14px;color:#222">'+(c.nome||'')+'</span>';
+      h+='<span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;background:'+(ativo?'#e0f7fa':'#eee')+';color:'+(ativo?'#00838f':'#999')+'">'+(ativo?'Ativo':'Inativo')+'</span>';
+      h+='</div>';
+      if(c.documento||c.telefone){
+        h+='<div style="display:flex;gap:14px;font-size:12px;color:#666;flex-wrap:wrap">';
+        if(c.documento)h+='<span><i class="fas fa-id-card" style="color:#00acc1;margin-right:4px"></i>'+c.documento+'</span>';
+        if(c.telefone)h+='<span><i class="fas fa-phone" style="color:#00acc1;margin-right:4px"></i>'+c.telefone+'</span>';
+        h+='</div>';
+      }
+      if(c.email)h+='<div style="font-size:11px;color:#aaa;margin-top:3px"><i class="fas fa-envelope" style="margin-right:4px"></i>'+c.email+'</div>';
+      h+='</td></tr>';
+    }else{
+      h+='<tr class="'+(sel?' selected':'')+' " onclick="selecionarCli('+c.cliente_id+')" ondblclick="editarCliId('+c.cliente_id+')">';
+      h+='<td><input type="checkbox" '+(sel?'checked':'')+'></td>';
+      h+='<td>'+String(c.cliente_id).padStart(6,'0')+'</td>';
+      h+='<td><b>'+(c.nome||'')+'</b></td><td>'+(c.documento||'')+'</td><td>'+(c.telefone||'')+'</td><td>'+(c.email||'')+'</td>';
+      h+='<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">'+(c.endereco||'')+'</td>';
+      h+='<td><span class="badge '+(c.ativo?'bc':'bv')+'">'+(c.ativo?'Ativo':'Inativo')+'</span></td>';
+      h+='</tr>';
+    }
   }
   tbody.innerHTML=h;
   document.getElementById('ftCliTotal').textContent='Clientes: '+lista.length;
