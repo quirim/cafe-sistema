@@ -159,8 +159,10 @@ function toast(msg,tipo){
 function trocarAba(aba){
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.nav-tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.bottom-nav-item').forEach(function(t){t.classList.remove('active');});
   document.getElementById('page-'+aba).classList.add('active');
   document.getElementById('tab-'+aba).classList.add('active');
+  var bn=document.getElementById('bnav-'+aba);if(bn)bn.classList.add('active');
   if(aba==='dashboard')carregarDashboard();
   if(aba==='cafe')carregarCafe();
   if(aba==='dinheiro')carregarDin();

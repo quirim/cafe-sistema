@@ -281,6 +281,9 @@ input[readonly]{background:#f5f5f5;color:#555}
 #tblListPag td { padding: 12px 14px; vertical-align: middle; }
 #tblListPag th { padding: 12px 14px; }
 
+/* ===== BOTTOM NAV MOBILE ===== */
+.bottom-nav { display: none; }
+
 /* ===== MOBILE RESPONSIVE ===== */
 @media (max-width: 768px) {
 
@@ -289,9 +292,43 @@ input[readonly]{background:#f5f5f5;color:#555}
   .top-bar span:not(:first-child) { display: none; }
   #dbStatus { display: none; }
 
-  /* Abas: scroll horizontal */
-  .nav-tabs { overflow-x: auto; flex-wrap: nowrap; padding: 0 8px; gap: 0; -webkit-overflow-scrolling: touch; }
-  .nav-tab { padding: 8px 14px; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+  /* Abas no topo: ocultar no mobile */
+  .nav-tabs { display: none !important; }
+
+  /* Menu inferior fixo */
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: #fff;
+    border-top: 2px solid var(--cyan);
+    z-index: 1000;
+    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 0 -2px 8px rgba(0,0,0,.1);
+  }
+  .bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 2px 6px;
+    cursor: pointer;
+    color: #aaa;
+    font-size: 10px;
+    gap: 3px;
+    background: none;
+    border: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: color .2s;
+  }
+  .bottom-nav-item i { font-size: 20px; }
+  .bottom-nav-item span { font-size: 9px; line-height: 1; text-align: center; }
+  .bottom-nav-item.active { color: var(--cyan-dark); }
+  .bottom-nav-item.active i { color: var(--cyan); }
+
+  /* Espaço para não cobrir conteudo */
+  #pages-wrapper { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 
   /* Toolbar: empilha botões */
   .toolbar { padding: 8px 10px; flex-wrap: wrap; gap: 6px; }
@@ -410,6 +447,25 @@ input[readonly]{background:#f5f5f5;color:#555}
   <div class="nav-tab" id="tab-clientes" onclick="trocarAba('clientes')"><i class="fas fa-users"></i> Clientes</div>
   <div class="nav-tab" id="tab-relatorios" onclick="trocarAba('relatorios')"><i class="fas fa-chart-bar"></i> Relatórios</div>
 </div>
+
+<!-- MENU INFERIOR MOBILE -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="bottom-nav-item active" id="bnav-dashboard" onclick="trocarAba('dashboard')">
+    <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
+  </button>
+  <button class="bottom-nav-item" id="bnav-cafe" onclick="trocarAba('cafe')">
+    <i class="fas fa-coffee"></i><span>Café</span>
+  </button>
+  <button class="bottom-nav-item" id="bnav-dinheiro" onclick="trocarAba('dinheiro')">
+    <i class="fas fa-dollar-sign"></i><span>Dinheiro</span>
+  </button>
+  <button class="bottom-nav-item" id="bnav-clientes" onclick="trocarAba('clientes')">
+    <i class="fas fa-users"></i><span>Clientes</span>
+  </button>
+  <button class="bottom-nav-item" id="bnav-relatorios" onclick="trocarAba('relatorios')">
+    <i class="fas fa-chart-bar"></i><span>Relatórios</span>
+  </button>
+</nav>
 <div style="flex:1;display:flex;flex-direction:column;overflow:hidden" id="pages-wrapper">
 
 <!-- ===== ABA DASHBOARD ===== -->
