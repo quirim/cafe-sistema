@@ -291,6 +291,7 @@ input[readonly]{background:#f5f5f5;color:#555}
   .top-bar { padding: 8px 12px; font-size: 12px; }
   .top-bar span:not(:first-child) { display: none; }
   #dbStatus { display: none; }
+  .top-icon { display: none; }  /* icones movidos para menu Mais */
 
   /* Abas no topo: ocultar no mobile */
   .nav-tabs { display: none !important; }
@@ -465,7 +466,31 @@ input[readonly]{background:#f5f5f5;color:#555}
   <button class="bottom-nav-item" id="bnav-relatorios" onclick="trocarAba('relatorios')">
     <i class="fas fa-chart-bar"></i><span>Relatórios</span>
   </button>
+  <button class="bottom-nav-item" id="bnav-mais" onclick="abrirMenuMais()">
+    <i class="fas fa-ellipsis-h"></i><span>Mais</span>
+  </button>
 </nav>
+
+<!-- MODAL MAIS (mobile) -->
+<div id="modalMais" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.45)" onclick="fecharMenuMais()">
+  <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:16px 16px 0 0;padding:20px 16px;padding-bottom:calc(20px + env(safe-area-inset-bottom))" onclick="event.stopPropagation()">
+    <div style="text-align:center;font-size:12px;color:#aaa;margin-bottom:16px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Menu</div>
+    <button onclick="recarregarTudo();fecharMenuMais()" style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 12px;border:none;background:none;font-size:15px;cursor:pointer;border-radius:8px;color:#333;text-align:left" onmousedown="this.style.background='#f0f0f0'" onmouseup="this.style.background='none'">
+      <i class="fas fa-sync-alt" style="color:#00acc1;width:22px;text-align:center"></i> Atualizar dados
+    </button>
+    <button onclick="abrirTrocarSenha();fecharMenuMais()" style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 12px;border:none;background:none;font-size:15px;cursor:pointer;border-radius:8px;color:#333;text-align:left" onmousedown="this.style.background='#f0f0f0'" onmouseup="this.style.background='none'">
+      <i class="fas fa-key" style="color:#ff9800;width:22px;text-align:center"></i> Alterar senha
+    </button>
+    <button onclick="fazerBackup();fecharMenuMais()" style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 12px;border:none;background:none;font-size:15px;cursor:pointer;border-radius:8px;color:#333;text-align:left" onmousedown="this.style.background='#f0f0f0'" onmouseup="this.style.background='none'">
+      <i class="fas fa-database" style="color:#607d8b;width:22px;text-align:center"></i> Backup
+    </button>
+    <div style="border-top:1px solid #eee;margin:8px 0"></div>
+    <button onclick="fazerLogout()" style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 12px;border:none;background:none;font-size:15px;cursor:pointer;border-radius:8px;color:#c62828;text-align:left" onmousedown="this.style.background='#fff3f3'" onmouseup="this.style.background='none'">
+      <i class="fas fa-sign-out-alt" style="width:22px;text-align:center"></i> Sair do sistema
+    </button>
+    <button onclick="fecharMenuMais()" style="width:100%;padding:12px;border:1px solid #ddd;background:none;border-radius:8px;font-size:14px;color:#666;cursor:pointer;margin-top:6px">Cancelar</button>
+  </div>
+</div>
 <div style="flex:1;display:flex;flex-direction:column;overflow:hidden" id="pages-wrapper">
 
 <!-- ===== ABA DASHBOARD ===== -->

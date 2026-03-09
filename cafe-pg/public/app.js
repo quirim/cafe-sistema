@@ -564,7 +564,7 @@ function renderDin(){
     }
   }
   tbody.innerHTML=h;
-  var ts=dadosDin.reduce(function(a,d){return a+(parseFloat(d.saldo_devedor)||0);},0);
+  var ts=dadosDin.filter(function(d){return d.situacao!=='Q';}).reduce(function(a,d){return a+Math.max(0,parseFloat(d.saldo_devedor)||0);},0);
   var venc=dadosDin.filter(function(d){return d.situacao==='A'&&d.vencimento&&new Date(d.vencimento)<new Date();}).length;
   document.getElementById('ftDinTotal').textContent='Registros: '+lista.length;
   document.getElementById('ftDinSaldo').textContent='Saldo Total: '+fmtBRL(ts);
@@ -1304,4 +1304,11 @@ async function carregarVencimentos(){
     area.innerHTML=h;
     document.getElementById('btnImprimirRel').style.display='';
   }catch(e){area.innerHTML='<div style="color:red;padding:20px">Erro de conexão</div>';}
+}
+
+function abrirMenuMais(){
+  document.getElementById('modalMais').style.display='block';
+}
+function fecharMenuMais(){
+  document.getElementById('modalMais').style.display='none';
 }
