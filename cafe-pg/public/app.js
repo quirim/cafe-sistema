@@ -564,10 +564,10 @@ function renderDin(){
     }
   }
   tbody.innerHTML=h;
-  var ts=dadosDin.filter(function(d){return d.situacao!=='Q';}).reduce(function(a,d){return a+Math.max(0,parseFloat(d.saldo_devedor)||0);},0);
+  var tc=dadosDin.filter(function(d){return d.situacao!=='Q';}).reduce(function(a,d){return a+(parseFloat(d.capital)||0);},0);
   var venc=dadosDin.filter(function(d){return d.situacao==='A'&&d.vencimento&&new Date(d.vencimento)<new Date();}).length;
   document.getElementById('ftDinTotal').textContent='Registros: '+lista.length;
-  document.getElementById('ftDinSaldo').textContent='Saldo Total: '+fmtBRL(ts);
+  document.getElementById('ftDinSaldo').textContent='Capital: '+fmtBRL(tc);
   document.getElementById('ftDinVenc').textContent='Vencidos: '+venc;
 }
 
