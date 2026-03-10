@@ -946,7 +946,7 @@ async function carregarHistorico(){
       h+='<span style="font-size:13px;font-weight:700;color:'+(saldoKg>0?'#c62828':'#2e7d32')+'">'+(saldoKg>0?'Saldo: '+saldoSc+' sc '+saldoKgR+' kg':'✅ Quitado')+'</span></div>';
       rows.forEach(function(r){
         var base=(parseInt(r.sacas)||0)*60+(parseInt(r.kg_avulso)||0);
-        var total=parseInt(r.total_kg_com_juros)||base;
+        var total=r.tipo==='D'?(parseInt(r.total_kg_com_juros)||base):base; // C: nunca tem juros
         var jurosKg=r.tipo==='D'?total-base:0;
         var jSc=Math.floor(jurosKg/60),jKg=jurosKg%60;
         var tSc=Math.floor(total/60),tKg=total%60;
@@ -981,7 +981,7 @@ async function carregarHistorico(){
       h+='<table class="rel-table"><thead><tr><th>Nº</th><th>Tipo</th><th>Data</th><th>Vencimento</th><th>Capital</th><th>Juros%</th><th>Juros Sc/Kg</th><th>Total c/ Juros</th><th>Saldo Linha</th><th>Observação</th></tr></thead><tbody>';
       rows.forEach(function(r){
         var base=(parseInt(r.sacas)||0)*60+(parseInt(r.kg_avulso)||0);
-        var total=parseInt(r.total_kg_com_juros)||base;
+        var total=r.tipo==='D'?(parseInt(r.total_kg_com_juros)||base):base; // C: nunca tem juros
         var jurosKg=r.tipo==='D'?total-base:0;
         var jSc=Math.floor(jurosKg/60),jKg=jurosKg%60;
         var tSc=Math.floor(total/60),tKg=total%60;
