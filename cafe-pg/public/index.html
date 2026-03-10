@@ -629,12 +629,11 @@ input[readonly]{background:#f5f5f5;color:#555}
       </div>
     </div>
     <div class="toolbar-right">
-      <select id="filtroSitDin" class="btn" style="min-width:140px" onchange="paginaDin=1;carregarDin(1)">
-        <option value="">Todas situações</option>
-        <option value="A">Aberto</option>
-        <option value="Q">Quitado</option>
-        <option value="V">Vencido</option>
-      </select>
+      <div style="display:flex;gap:4px;flex-wrap:wrap">
+        <button id="sitBtnA" class="btn" onclick="toggleSitDin('A')" style="font-size:12px;padding:4px 10px;border:2px solid #1565c0;background:#fff;color:#1565c0;border-radius:6px;font-weight:700">Aberto</button>
+        <button id="sitBtnV" class="btn" onclick="toggleSitDin('V')" style="font-size:12px;padding:4px 10px;border:2px solid #c62828;background:#fff;color:#c62828;border-radius:6px;font-weight:700">Vencido</button>
+        <button id="sitBtnQ" class="btn" onclick="toggleSitDin('Q')" style="font-size:12px;padding:4px 10px;border:2px solid #2e7d32;background:#fff;color:#2e7d32;border-radius:6px;font-weight:700">Quitado</button>
+      </div>
       <div class="search-box">
         <input type="text" id="searchDin" placeholder="Pesquisar cliente..." oninput="filtrarDin()" autocomplete="off">
         <i class="fas fa-search"></i>

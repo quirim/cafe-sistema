@@ -66,8 +66,8 @@ function iniciarSistema(){
   verificarStatus();
   carregarClientes();
   carregarDashboard();
-  carregarCafe(1,'');
-  carregarDin(1,'');
+  carregarCafe('last','');
+  carregarDin('last','');
   document.getElementById('movData').value=hoje();
   document.getElementById('dinData').value=hoje();
   document.getElementById('pagData').value=hoje();
@@ -185,7 +185,7 @@ async function verificarStatus(){
 
 /* ===== CAFE ===== */
 async function carregarCafe(pagina,buscaOverride){
-  paginaCafe=pagina||paginaCafe;
+  if(pagina==='last'){paginaCafe=99999;}else{paginaCafe=pagina||paginaCafe;}
   var busca=buscaOverride!==undefined?buscaOverride:document.getElementById('searchCafe').value.trim();
   var de=document.getElementById('cafeDe')?document.getElementById('cafeDe').value:'';
   var ate=document.getElementById('cafeAte')?document.getElementById('cafeAte').value:'';
@@ -499,18 +499,50 @@ function exportarCSV(){
 }
 
 /* ===== DINHEIRO ===== */
+function toggleSitDin(sit){
+  if(!window.dinSitAtivos)window.dinSitAtivos=[];
+  var idx=window.dinSitAtivos.indexOf(sit);
+  if(idx>=0)window.dinSitAtivos.splice(idx,1);else window.dinSitAtivos.push(sit);
+  ['A','V','Q'].forEach(function(s){
+    var btn=document.getElementById('sitBtn'+s);
+    if(!btn)return;
+    var on=window.dinSitAtivos.includes(s);
+    btn.style.background=on?(s==='Q'?'#2e7d32':s==='V'?'#c62828':'#1565c0'):'#fff';
+    btn.style.color=on?'#fff':(s==='Q'?'#2e7d32':s==='V'?'#c62828':'#1565c0');
+  });
+  paginaDin=1;carregarDin(1);
+}
+
 async function carregarDin(pagina,buscaOverride){
-  paginaDin=pagina||paginaDin;
+  if(pagina==='last'){paginaDin=99999;}else{paginaDin=pagina||paginaDin;}
   var busca=buscaOverride!==undefined?buscaOverride:(document.getElementById('searchDin')||{value:''}).value.trim();
-  var sit=(document.getElementById('filtroSitDin')||{value:''}).value||'';
+  var sitAtivos=window.dinSitAtivos||[];
+  var sit=sitAtivos.length===1?sitAtivos[0]:(sitAtivos.length===0||sitAtivos.length===3?'':'');
+  // Para 2 seleções: enviar múltiplos ou lógica especial
+  if(sitAtivos.length===2){
+    // A+V = abertos incluindo vencidos → não filtrar por situação (deixar tudo exceto Q) 
+    // A+Q ou V+Q → tratar como sem filtro por ora
+    sit='';
+    if(sitAtivos.includes('A')&&sitAtivos.includes('V')&&!sitAtivos.includes('Q'))sit='AV';
+    if(sitAtivos.includes('A')&&sitAtivos.includes('Q')&&!sitAtivos.includes('V'))sit='AQ';
+    if(sitAtivos.includes('V')&&sitAtivos.includes('Q')&&!sitAtivos.includes('A'))sit='VQ';
+  }
   var url=API+'/dinheiro?page='+paginaDin+'&limit='+limitDin;
   if(busca)url+='&busca='+encodeURIComponent(busca);
-  if(sit)url+='&situacao='+sit;
+  if(sit&&sit.length<=1)url+='&situacao='+sit;
+  // Para combinações de 2 situações, filtrar no frontend após receber todos
+  window._dinSitFiltro=sit;
   document.getElementById('gridDin').innerHTML='<tr><td colspan="10" style="text-align:center;padding:30px;color:#aaa"><span class="spinner"></span>Carregando...</td></tr>';
   try{
     var r=await fetch(url);var d=await r.json();
     if(d.ok){
-      dadosDin=d.data;
+      var rawData=d.data;
+      // Filtro multi-situação no frontend
+      var sf=window._dinSitFiltro||'';
+      if(sf==='AV') rawData=rawData.filter(function(x){return x.situacao!=='Q';});
+      else if(sf==='AQ') rawData=rawData.filter(function(x){return x.situacao==='Q'||(x.situacao==='A'&&!(x.vencimento&&new Date(x.vencimento)<new Date()));});
+      else if(sf==='VQ') rawData=rawData.filter(function(x){return x.situacao==='Q'||(x.situacao==='A'&&x.vencimento&&new Date(x.vencimento)<new Date());});
+      dadosDin=rawData;
       dadosDinTotais=d.totais||{capital_aberto:0,total_pago:0,vencidos:0};
       var pag=d.paginacao||{page:1,totalPages:1,total:d.data.length,limit:d.data.length};
       totalPaginasDin=pag.totalPages;
