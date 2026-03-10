@@ -928,8 +928,13 @@ async function carregarHistorico(){
     var rows=d.data;
     rows.sort(function(a,b){return a.movimento_id-b.movimento_id;});
     var cliente=rows.length?rows[0].cliente_nome:document.getElementById('relClienteSel').selectedOptions[0].text;
-    var totalD=0;
-    rows.forEach(function(r){if(r.tipo==='D')totalD+=parseInt(r.total_kg_com_juros)||0;});
+    var totalD=0, totalDcomJuros=0, totalC=0;
+    rows.forEach(function(r){
+      var base=(parseInt(r.sacas)||0)*60+(parseInt(r.kg_avulso)||0);
+      var comJrs=parseInt(r.total_kg_com_juros)||base;
+      if(r.tipo==='D'){totalD+=base; totalDcomJuros+=comJrs;}
+      else{totalC+=base;}
+    });
     var saldoKgLast=rows.length?Math.max(0,parseInt(rows[rows.length-1].saldo_acumulado_kg)||0):0;
     var saldoKg=saldoKgLast,saldoSc=Math.floor(saldoKg/60),saldoKgR=saldoKg%60;
     if(!rows.length){area.innerHTML='<div style="text-align:center;padding:40px;color:#aaa">Nenhum movimento encontrado.</div>';return;}
@@ -952,6 +957,7 @@ async function carregarHistorico(){
         h+='<div style="background:#fff;border-radius:10px;border-left:4px solid '+bord+';padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.08)">';
         h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
         h+='<div style="display:flex;align-items:center;gap:8px"><span style="font-weight:700;font-size:13px;color:#fff;background:'+bord+';border-radius:6px;padding:1px 8px">'+(isD?'D':'C')+'</span>';
+        h+='<span style="font-size:11px;color:#aaa;font-weight:600">#'+String(r.movimento_id).padStart(4,'0')+'</span>';
         h+='<span style="font-size:12px;color:#666">'+fmtData(r.data_movimento)+'</span></div>';
         h+='<span style="font-size:13px;font-weight:700;color:'+bord+'">'+tSc+' sc '+tKg+' kg</span></div>';
         h+='<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;font-size:12px;color:#555">';
@@ -961,7 +967,12 @@ async function carregarHistorico(){
         if(r.observacao)h+='<div style="font-size:11px;color:#aaa;margin-top:3px">'+r.observacao+'</div>';
         h+='</div>';
       });
-      h+='<div style="background:#fff;border-radius:8px;padding:12px 14px;margin-top:4px;display:flex;justify-content:space-between;font-weight:700;font-size:13px"><span>Emprestado: '+Math.floor(totalD/60)+' sc '+(totalD%60)+' kg</span><span style="color:'+(saldoKg>0?'#c62828':'#2e7d32')+'">'+(saldoKg>0?saldoSc+' sc '+saldoKgR+' kg deve':'✅ Quitado')+'</span></div></div>';
+      var jTotal=totalDcomJuros-totalD,jSc=Math.floor(jTotal/60),jKg=jTotal%60;
+      var cSc=Math.floor(totalC/60),cKg=totalC%60;
+      h+='<div style="background:#f0fffe;border-radius:8px;padding:12px 14px;margin-top:4px;font-size:12px">';
+      h+='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>📦 Capital emp.: <b>'+Math.floor(totalD/60)+' sc '+(totalD%60)+' kg</b></span><span>📈 Total juros: <b>'+jSc+' sc '+jKg+' kg</b></span></div>';
+      h+='<div style="display:flex;justify-content:space-between"><span style="color:#2e7d32">✅ Recebido: <b>'+cSc+' sc '+cKg+' kg</b></span><span style="font-weight:700;color:'+(saldoKg>0?'#c62828':'#2e7d32')+'">'+(saldoKg>0?saldoSc+' sc '+saldoKgR+' kg deve':'Quitado ✅')+'</span></div>';
+      h+='</div></div>';
     } else {
       var agora=new Date();var dataHora=agora.toLocaleDateString('pt-BR')+' às '+agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
       h='<div class="rel-wrap"><div class="rel-topo"><div class="rel-empresa"><h2><i class="fas fa-coffee"></i> EMPRÉSTIMOS &amp; SAFRA</h2><p>Sistema de Controle de Empréstimos de Café</p></div>';
@@ -1074,7 +1085,7 @@ async function carregarHistoricoDin(){
         var bord=r.situacao==='Q'?'#2e7d32':vencido?'#c62828':'#1565c0';
         h+='<div style="background:#fff;border-radius:10px;border-left:4px solid '+bord+';padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.07)">';
         h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
-        h+='<span style="font-size:12px;color:#888">📅 '+fmtData(r.data)+'</span>';
+        h+='<div style="display:flex;align-items:center;gap:6px"><span style="font-size:10px;color:#aaa">#'+String(r.id).padStart(4,'0')+'</span><span style="font-size:12px;color:#888">📅 '+fmtData(r.data)+'</span></div>';
         h+='<span style="font-size:11px;font-weight:700;color:#fff;background:'+sitColor+';border-radius:10px;padding:2px 8px">'+sitL+'</span>';
         h+='</div>';
         h+='<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;font-size:12px;color:#555">';
