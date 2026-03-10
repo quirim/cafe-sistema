@@ -60,8 +60,9 @@ router.get('/', async (req, res) => {
 router.get('/stats', async (req, res) => {
   try {
     const result = await query(`
-      SELECT COUNT(*) AS total_registros,
-        COALESCE(SUM(e.capital), 0) AS total_capital,
+      SELECT
+        COUNT(*) AS total_registros,
+        COALESCE(SUM(CASE WHEN e.situacao != 'Q' THEN e.capital ELSE 0 END), 0) AS total_capital,
         COALESCE(SUM(pag.total_pago), 0) AS total_pago,
         SUM(CASE WHEN e.situacao='A' AND e.vencimento < CURRENT_DATE THEN 1 ELSE 0 END) AS total_vencidos
       FROM emprestimos_dinheiro e
