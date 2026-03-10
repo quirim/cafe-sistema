@@ -107,11 +107,14 @@ router.get('/stats', async (req, res) => {
         ON pag.emprestimo_id = e.id`);
     const row = result.rows[0];
     res.json({ ok: true, data: {
-      total_registros: parseInt(row.total_registros) || 0,
-      total_abertos:   parseInt(row.total_abertos)   || 0,
-      total_capital:   parseFloat(row.total_capital) || 0,
-      total_pago:      parseFloat(row.total_pago)    || 0,
-      total_vencidos:  parseInt(row.total_vencidos)  || 0
+      total_registros:       parseInt(row.total_registros)         || 0,
+      total_abertos:         parseInt(row.total_abertos)           || 0,
+      total_capital:         parseFloat(row.total_capital)         || 0,
+      total_pago:            parseFloat(row.total_pago)            || 0,
+      total_vencidos:        parseInt(row.total_vencidos)          || 0,
+      total_capital_quitado: parseFloat(row.total_capital_quitado) || 0,
+      total_pago_quitado:    parseFloat(row.total_pago_quitado)    || 0,
+      total_quitados:        parseInt(row.total_quitados)          || 0
     }});
   } catch (err) {
     res.status(500).json({ ok: false, erro: err.message });
