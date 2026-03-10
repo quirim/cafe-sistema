@@ -19,9 +19,18 @@ router.get('/', async (req, res) => {
     let pi = 1;
     if (cliente_id)     { where += ` AND e.cliente_id = $${pi++}`; params.push(parseInt(cliente_id)); }
     if (busca)          { where += ` AND c.nome ILIKE $${pi++}`;   params.push(`%${busca}%`); }
-    if (situacao==='Q') { where += ` AND e.situacao = 'Q'`; }
-    if (situacao==='A') { where += ` AND e.situacao = 'A' AND (e.vencimento IS NULL OR e.vencimento >= CURRENT_DATE)`; }
-    if (situacao==='V') { where += ` AND e.situacao = 'A' AND e.vencimento < CURRENT_DATE`; }
+    const sits = situacao ? situacao.split(',').map(s=>s.trim()).filter(Boolean) : [];
+    if (sits.length === 1) {
+      if (sits[0]==='Q') { where += ` AND e.situacao = 'Q'`; }
+      if (sits[0]==='A') { where += ` AND e.situacao = 'A' AND (e.vencimento IS NULL OR e.vencimento >= CURRENT_DATE)`; }
+      if (sits[0]==='V') { where += ` AND e.situacao = 'A' AND e.vencimento < CURRENT_DATE`; }
+    } else if (sits.length === 2) {
+      const hasA = sits.includes('A'), hasV = sits.includes('V'), hasQ = sits.includes('Q');
+      if (hasA && hasV && !hasQ) { where += ` AND e.situacao = 'A'`; } // aberto+vencido = todos abertos
+      if (hasA && hasQ && !hasV) { where += ` AND (e.situacao = 'Q' OR (e.situacao = 'A' AND (e.vencimento IS NULL OR e.vencimento >= CURRENT_DATE)))`; }
+      if (hasV && hasQ && !hasA) { where += ` AND (e.situacao = 'Q' OR (e.situacao = 'A' AND e.vencimento < CURRENT_DATE))`; }
+    }
+    // sits.length === 0 or 3: sem filtro (mostra tudo)
     if (dataDE)  { where += ` AND e.data >= $${pi++}`; params.push(dataDE); }
     if (dataATE) { where += ` AND e.data <= $${pi++}`; params.push(dataATE); }
 
