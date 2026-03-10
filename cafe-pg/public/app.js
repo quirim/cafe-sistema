@@ -1000,7 +1000,7 @@ async function carregarDevedoresDin(){
     var rows=d.data.filter(function(x){return x.situacao!=='Q'&&(parseFloat(x.saldo_devedor)||0)>0;});
     rows.sort(function(a,b){return (parseFloat(b.saldo_devedor)||0)-(parseFloat(a.saldo_devedor)||0);});
     var totalCapital=rows.reduce(function(s,r){return s+(parseFloat(r.capital)||0);},0);
-    var totalJurosPago=rows.reduce(function(s,r){var juros=(parseFloat(r.capital)||0)*(parseFloat(r.juros_pct)||0)/100;return s+Math.min(parseFloat(r.total_pago)||0,juros);},0);
+    var totalJurosPago=rows.reduce(function(s,r){return s+(parseFloat(r.total_pago)||0);},0);
     if(!rows.length){area.innerHTML='<div style="text-align:center;padding:40px;color:#aaa">Nenhum devedor encontrado.</div>';return;}
     var h='';
     if(isMobile()){
@@ -1033,7 +1033,7 @@ async function carregarDevedoresDin(){
       h+='<div class="rel-rodape">Documento gerado pelo Sistema Empréstimos &amp; Safra — '+dataHora+'</div></div>';
     }
     area.innerHTML=h;
-    document.getElementById('ftRelInfo').textContent=rows.length+' devedores — Capital: '+fmtBRL(totalCapital)+' | Juros Pago: '+fmtBRL(totalJurosPago);
+    document.getElementById('ftRelInfo').textContent=rows.length+' devedores — Capital: '+fmtBRL(totalCapital)+' | Total Pago: '+fmtBRL(totalJurosPago);
     document.getElementById('btnImprimirRel').style.display='';
   }catch(e){area.innerHTML='<div style="color:#c62828;padding:20px">Erro: '+e.message+'</div>';}
 }
