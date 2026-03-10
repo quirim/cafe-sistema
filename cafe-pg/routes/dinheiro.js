@@ -5,14 +5,14 @@ const { query } = require('../db');
 // GET /api/dinheiro
 router.get('/', async (req, res) => {
   try {
-    const page   = Math.max(1, parseInt(req.query.page)  || 1);
-    const limit  = Math.min(99999, parseInt(req.query.limit) || 50);
-    const offset = (page - 1) * limit;
-    const busca      = req.query.busca    || '';
-    const situacao   = req.query.situacao || '';
+    const page       = Math.max(1, parseInt(req.query.page)  || 1);
+    const limit      = Math.min(99999, parseInt(req.query.limit) || 50);
+    const offset     = (page - 1) * limit;
+    const busca      = req.query.busca      || '';
+    const situacao   = req.query.situacao   || '';
     const cliente_id = req.query.cliente_id || '';
-    const dataDE     = req.query.dataDE  || '';
-    const dataATE    = req.query.dataATE || '';
+    const dataDE     = req.query.dataDE     || '';
+    const dataATE    = req.query.dataATE    || '';
 
     let where = '1=1';
     const params = [];
@@ -22,17 +22,31 @@ router.get('/', async (req, res) => {
     if (situacao==='Q') { where += ` AND e.situacao = 'Q'`; }
     if (situacao==='A') { where += ` AND e.situacao = 'A' AND (e.vencimento IS NULL OR e.vencimento >= CURRENT_DATE)`; }
     if (situacao==='V') { where += ` AND e.situacao = 'A' AND e.vencimento < CURRENT_DATE`; }
-    if (dataDE)         { where += ` AND e.data >= $${pi++}`; params.push(dataDE); }
-    if (dataATE)        { where += ` AND e.data <= $${pi++}`; params.push(dataATE); }
+    if (dataDE)  { where += ` AND e.data >= $${pi++}`; params.push(dataDE); }
+    if (dataATE) { where += ` AND e.data <= $${pi++}`; params.push(dataATE); }
 
     const countRes = await query(`
       SELECT COUNT(*) AS total FROM emprestimos_dinheiro e
       INNER JOIN clientes c ON c.cliente_id = e.cliente_id WHERE ${where}`, params);
     const total = parseInt(countRes.rows[0].total);
 
+    // Totais calculados no banco para o filtro atual
+    const totaisRes = await query(`
+      SELECT
+        COALESCE(SUM(CASE WHEN e.situacao != 'Q' THEN e.capital ELSE 0 END), 0)      AS capital_aberto,
+        COALESCE(SUM(COALESCE(pag.total_pago, 0)), 0)                                  AS total_pago,
+        COUNT(CASE WHEN e.situacao='A' AND e.vencimento < CURRENT_DATE THEN 1 END)    AS vencidos
+      FROM emprestimos_dinheiro e
+      INNER JOIN clientes c ON c.cliente_id = e.cliente_id
+      LEFT JOIN (SELECT emprestimo_id, SUM(valor) AS total_pago FROM pagamentos_dinheiro GROUP BY emprestimo_id) pag
+        ON pag.emprestimo_id = e.id
+      WHERE ${where}`, params);
+    const tot = totaisRes.rows[0];
+
     const result = await query(`
       SELECT e.id, e.cliente_id, c.nome AS cliente_nome, c.telefone,
-        TO_CHAR(e.data,'YYYY-MM-DD') AS data, TO_CHAR(e.vencimento,'YYYY-MM-DD') AS vencimento,
+        TO_CHAR(e.data,'YYYY-MM-DD') AS data,
+        TO_CHAR(e.vencimento,'YYYY-MM-DD') AS vencimento,
         e.descricao, e.capital, e.juros_pct, e.situacao,
         ROUND(e.capital * (1 + e.juros_pct / 100.0), 2) AS total_com_juros,
         COALESCE(pag.total_pago, 0) AS total_pago,
@@ -41,7 +55,8 @@ router.get('/', async (req, res) => {
           WHEN e.situacao = 'Q' THEN 'QUITADO'
           WHEN e.vencimento IS NOT NULL AND e.vencimento < CURRENT_DATE THEN 'VENCIDO'
           ELSE 'ABERTO'
-        END AS situacao_label
+        END AS situacao_label,
+        (e.vencimento IS NOT NULL AND e.vencimento < CURRENT_DATE AND e.situacao = 'A') AS is_vencido
       FROM emprestimos_dinheiro e
       INNER JOIN clientes c ON c.cliente_id = e.cliente_id
       LEFT JOIN (SELECT emprestimo_id, SUM(valor) AS total_pago FROM pagamentos_dinheiro GROUP BY emprestimo_id) pag
@@ -50,25 +65,42 @@ router.get('/', async (req, res) => {
       ORDER BY e.id DESC
       LIMIT ${limit} OFFSET ${offset}`, params);
 
-    res.json({ ok: true, data: result.rows, paginacao: { total, page, limit, totalPages: Math.ceil(total / limit) } });
+    res.json({
+      ok: true,
+      data: result.rows,
+      totais: {
+        capital_aberto: parseFloat(tot.capital_aberto) || 0,
+        total_pago:     parseFloat(tot.total_pago)     || 0,
+        vencidos:       parseInt(tot.vencidos)         || 0
+      },
+      paginacao: { total, page, limit, totalPages: Math.ceil(total / limit) }
+    });
   } catch (err) {
     res.status(500).json({ ok: false, erro: err.message });
   }
 });
 
-// GET /api/dinheiro/stats
+// GET /api/dinheiro/stats — Dashboard
 router.get('/stats', async (req, res) => {
   try {
     const result = await query(`
       SELECT
-        COUNT(*) AS total_registros,
-        COALESCE(SUM(CASE WHEN e.situacao != 'Q' THEN e.capital ELSE 0 END), 0) AS total_capital,
-        COALESCE(SUM(pag.total_pago), 0) AS total_pago,
-        SUM(CASE WHEN e.situacao='A' AND e.vencimento < CURRENT_DATE THEN 1 ELSE 0 END) AS total_vencidos
+        COUNT(*)                                                                       AS total_registros,
+        COUNT(CASE WHEN e.situacao != 'Q' THEN 1 END)                                AS total_abertos,
+        COALESCE(SUM(CASE WHEN e.situacao != 'Q' THEN e.capital ELSE 0 END), 0)      AS total_capital,
+        COALESCE(SUM(COALESCE(pag.total_pago, 0)), 0)                                 AS total_pago,
+        COUNT(CASE WHEN e.situacao='A' AND e.vencimento < CURRENT_DATE THEN 1 END)   AS total_vencidos
       FROM emprestimos_dinheiro e
       LEFT JOIN (SELECT emprestimo_id, SUM(valor) AS total_pago FROM pagamentos_dinheiro GROUP BY emprestimo_id) pag
         ON pag.emprestimo_id = e.id`);
-    res.json({ ok: true, data: result.rows[0] });
+    const row = result.rows[0];
+    res.json({ ok: true, data: {
+      total_registros: parseInt(row.total_registros) || 0,
+      total_abertos:   parseInt(row.total_abertos)   || 0,
+      total_capital:   parseFloat(row.total_capital) || 0,
+      total_pago:      parseFloat(row.total_pago)    || 0,
+      total_vencidos:  parseInt(row.total_vencidos)  || 0
+    }});
   } catch (err) {
     res.status(500).json({ ok: false, erro: err.message });
   }
@@ -79,18 +111,16 @@ router.get('/vencimentos', async (req, res) => {
   try {
     const dias = parseInt(req.query.dias) || 7;
     const incluirVencidos = req.query.incluirVencidos === '1';
-    let whereData;
-    if (incluirVencidos || dias === -1) {
-      whereData = `e.vencimento < CURRENT_DATE`;
-    } else {
-      whereData = `e.vencimento >= CURRENT_DATE AND e.vencimento <= CURRENT_DATE + INTERVAL '${dias} days'`;
-    }
+    let whereData = incluirVencidos || dias === -1
+      ? `e.vencimento < CURRENT_DATE`
+      : `e.vencimento >= CURRENT_DATE AND e.vencimento <= CURRENT_DATE + INTERVAL '${dias} days'`;
     const result = await query(`
       SELECT e.id AS emprestimo_id, c.nome AS cliente_nome, c.telefone,
         e.capital, e.juros_pct,
         ROUND(e.capital * (e.juros_pct / 100.0), 2) AS juros_valor,
         TO_CHAR(e.vencimento,'YYYY-MM-DD') AS vencimento,
-        e.descricao, e.situacao
+        e.descricao, e.situacao,
+        (e.vencimento < CURRENT_DATE) AS is_vencido
       FROM emprestimos_dinheiro e
       INNER JOIN clientes c ON c.cliente_id = e.cliente_id
       WHERE e.situacao = 'A' AND ${whereData}
@@ -112,7 +142,6 @@ router.get('/relatorio/pagamentos-juros', async (req, res) => {
     if (emprestimo_id) { where += ` AND p.emprestimo_id = $${pi++}`; params.push(parseInt(emprestimo_id)); }
     if (de)  { where += ` AND p.data >= $${pi++}`; params.push(de); }
     if (ate) { where += ` AND p.data <= $${pi++}`; params.push(ate); }
-
     const result = await query(`
       SELECT p.id AS pag_id, p.emprestimo_id,
         TO_CHAR(p.data,'YYYY-MM-DD') AS data_pag,
@@ -123,7 +152,10 @@ router.get('/relatorio/pagamentos-juros', async (req, res) => {
         e.situacao,
         TO_CHAR(e.data,'YYYY-MM-DD') AS data_emp,
         TO_CHAR(e.vencimento,'YYYY-MM-DD') AS vencimento,
-        e.descricao AS emp_desc
+        e.descricao AS emp_desc,
+        CASE WHEN e.situacao='Q' THEN 'QUITADO'
+             WHEN e.vencimento IS NOT NULL AND e.vencimento < CURRENT_DATE THEN 'VENCIDO'
+             ELSE 'ABERTO' END AS situacao_label
       FROM pagamentos_dinheiro p
       INNER JOIN emprestimos_dinheiro e ON e.id = p.emprestimo_id
       INNER JOIN clientes c ON c.cliente_id = e.cliente_id
@@ -131,7 +163,6 @@ router.get('/relatorio/pagamentos-juros', async (req, res) => {
         ON pag_total.emprestimo_id = e.id
       WHERE ${where}
       ORDER BY p.data DESC, p.id DESC`, params);
-
     res.json({ ok: true, data: result.rows });
   } catch (err) {
     res.status(500).json({ ok: false, erro: err.message });
@@ -170,9 +201,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { data, vencimento, descricao, capital, juros_pct, situacao } = req.body;
-    await query(`
-      UPDATE emprestimos_dinheiro SET data=$1, vencimento=$2, descricao=$3, capital=$4, juros_pct=$5
-      WHERE id=$6`,
+    await query(`UPDATE emprestimos_dinheiro SET data=$1, vencimento=$2, descricao=$3, capital=$4, juros_pct=$5 WHERE id=$6`,
       [data?.substring(0,10)||null, vencimento?.substring(0,10)||null,
        descricao||null, parseFloat(capital), parseFloat(juros_pct)||0, parseInt(req.params.id)]);
     if (situacao) {
