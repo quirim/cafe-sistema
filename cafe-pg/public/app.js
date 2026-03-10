@@ -997,7 +997,7 @@ async function carregarDevedoresDin(){
     if(sit)url+='&situacao='+sit;if(de)url+='&dataDE='+de;if(ate)url+='&dataATE='+ate;
     var r=await fetch(url);var d=await r.json();
     if(!d.ok){area.innerHTML='<div style="color:#c62828;padding:20px">Erro: '+d.erro+'</div>';return;}
-    var rows=d.data.filter(function(x){return x.situacao!=='Q'&&(parseFloat(x.saldo_devedor)||0)>0;});
+    var rows=d.data.filter(function(x){return x.situacao!=='Q';});
     rows.sort(function(a,b){return (parseFloat(b.saldo_devedor)||0)-(parseFloat(a.saldo_devedor)||0);});
     var totalCapital=rows.reduce(function(s,r){return s+(parseFloat(r.capital)||0);},0);
     var totalJurosPago=rows.reduce(function(s,r){return s+(parseFloat(r.total_pago)||0);},0);
