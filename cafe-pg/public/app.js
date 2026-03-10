@@ -409,6 +409,7 @@ function abrirMovModal(tipo,mov){
   document.getElementById('movTipo').disabled=false;
   document.getElementById('saldoBox').style.display='none';
   popularSelect('movCli');
+  window._movEditando=mov||null;
   if(mov){
     document.getElementById('movCli').value=mov.cliente_id||'';
     document.getElementById('movData').value=fmtInputDate(mov.data_movimento)||hoje();
@@ -419,6 +420,7 @@ function abrirMovModal(tipo,mov){
     document.getElementById('movObs').value=mov.observacao||'';
     carregarSaldo(mov);
   }else{
+    window._movEditando=null;
     document.getElementById('movCli').value='';
     document.getElementById('movData').value=hoje();
     document.getElementById('movVenc').value='';
@@ -442,8 +444,20 @@ function calcMovTotal(){
   var kg=parseInt(document.getElementById('movKg').value)||0;
   var jr=parseFloat(document.getElementById('movJuros').value)||0;
   var tipo=document.getElementById('movTipo').value;
-  if(tipo==='D'){var tk=Math.trunc((sc*60+kg)*(1+jr/100));document.getElementById('movTotal').value=Math.floor(tk/60)+' sc '+(tk%60)+' kg';}
-  else document.getElementById('movTotal').value=sc+' sc '+kg+' kg';
+  if(tipo==='D'){
+    var mov=window._movEditando;
+    // Se está editando: o valor sacas/kg JÁ inclui juros — mostrar sem recalcular
+    if(mov&&mov.total_kg_com_juros){
+      var tk=parseInt(mov.total_kg_com_juros);
+      document.getElementById('movTotal').value=Math.floor(tk/60)+' sc '+(tk%60)+' kg';
+    } else {
+      // Novo registro: calcular normalmente
+      var tk=Math.trunc((sc*60+kg)*(1+jr/100));
+      document.getElementById('movTotal').value=Math.floor(tk/60)+' sc '+(tk%60)+' kg';
+    }
+  } else {
+    document.getElementById('movTotal').value=sc+' sc '+kg+' kg';
+  }
 }
 async function carregarSaldo(mov){
   var id=document.getElementById('movCli').value;
