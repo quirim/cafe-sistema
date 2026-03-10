@@ -511,6 +511,7 @@ async function carregarDin(pagina,buscaOverride){
     var r=await fetch(url);var d=await r.json();
     if(d.ok){
       dadosDin=d.data;
+      dadosDinTotais=d.totais||{capital_aberto:0,total_pago:0,vencidos:0};
       var pag=d.paginacao||{page:1,totalPages:1,total:d.data.length,limit:d.data.length};
       totalPaginasDin=pag.totalPages;
       renderDin();renderPaginacaoDin(pag);
@@ -526,8 +527,8 @@ function renderDin(){
   var h='';
   for(var i=0;i<lista.length;i++){
     var d=lista[i];
-    var vencido=d.vencimento&&new Date(d.vencimento)<new Date()&&d.situacao==='A';
-    var sitL=d.situacao==='Q'?'Quitado':(vencido?'Vencido':'Aberto');
+    var vencido=d.is_vencido||false;
+    var sitL=d.situacao_label?d.situacao_label.charAt(0)+d.situacao_label.slice(1).toLowerCase():(d.situacao==='Q'?'Quitado':(vencido?'Vencido':'Aberto'));
     var sitColor=d.situacao==='Q'?'color:#2e7d32;font-weight:700':(vencido?'color:#c62828;font-weight:700':'color:#1565c0;font-weight:700');
     var sel=selDin===d.id;
     if(isMobile){
@@ -563,11 +564,11 @@ function renderDin(){
     }
   }
   tbody.innerHTML=h;
-  var tc=dadosDin.filter(function(d){return d.situacao!=='Q';}).reduce(function(a,d){return a+(parseFloat(d.capital)||0);},0);
-  var venc=dadosDin.filter(function(d){return d.situacao==='A'&&d.vencimento&&new Date(d.vencimento)<new Date();}).length;
+  // Totais calculados no banco (via d.totais)
+  var tot=dadosDinTotais||{capital_aberto:0,total_pago:0,vencidos:0};
   document.getElementById('ftDinTotal').textContent='Registros: '+lista.length;
-  document.getElementById('ftDinSaldo').textContent='Capital: '+fmtBRL(tc);
-  document.getElementById('ftDinVenc').textContent='Vencidos: '+venc;
+  document.getElementById('ftDinSaldo').textContent='Capital: '+fmtBRL(tot.capital_aberto);
+  document.getElementById('ftDinVenc').textContent='Vencidos: '+tot.vencidos;
 }
 
 function renderPaginacaoDin(pag){
@@ -746,7 +747,7 @@ async function carregarDashboard(){
     var d4=await r4.json();
     if(d4&&d4.ok){
       document.getElementById('dshCapital').textContent=fmtBRL(d4.data.total_capital);
-      document.getElementById('dshCapitalSub').textContent=d4.data.total_registros+' emprestimos';
+      document.getElementById('dshCapitalSub').textContent=(d4.data.total_abertos||d4.data.total_registros)+' empréstimos abertos';
       document.getElementById('dshPago').textContent=fmtBRL(d4.data.total_pago);
       document.getElementById('dshPagoSub').textContent=fmtBRL(d4.data.total_capital-d4.data.total_pago)+' em aberto';
       document.getElementById('dshVencidos').textContent=d4.data.total_vencidos;
@@ -999,7 +1000,8 @@ async function carregarDevedoresDin(){
     if(!d.ok){area.innerHTML='<div style="color:#c62828;padding:20px">Erro: '+d.erro+'</div>';return;}
     var rows=d.data.filter(function(x){return x.situacao!=='Q';});
     rows.sort(function(a,b){return (parseFloat(b.saldo_devedor)||0)-(parseFloat(a.saldo_devedor)||0);});
-    var totalCapital=rows.reduce(function(s,r){return s+(parseFloat(r.capital)||0);},0);
+    // Totais calculados no banco
+    var totalCapital=d.totais?d.totais.capital_aberto:rows.reduce(function(s,r){return s+(parseFloat(r.capital)||0);},0);
     var totalJurosPago=rows.reduce(function(s,r){return s+(parseFloat(r.total_pago)||0);},0);
     if(!rows.length){area.innerHTML='<div style="text-align:center;padding:40px;color:#aaa">Nenhum devedor encontrado.</div>';return;}
     var h='';
