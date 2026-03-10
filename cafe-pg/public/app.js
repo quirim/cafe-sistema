@@ -523,32 +523,16 @@ async function carregarDin(pagina,buscaOverride){
   if(pagina==='last'){paginaDin=99999;}else{paginaDin=pagina||paginaDin;}
   var busca=buscaOverride!==undefined?buscaOverride:(document.getElementById('searchDin')||{value:''}).value.trim();
   var sitAtivos=window.dinSitAtivos||[];
-  var sit=sitAtivos.length===1?sitAtivos[0]:(sitAtivos.length===0||sitAtivos.length===3?'':'');
-  // Para 2 seleções: enviar múltiplos ou lógica especial
-  if(sitAtivos.length===2){
-    // A+V = abertos incluindo vencidos → não filtrar por situação (deixar tudo exceto Q) 
-    // A+Q ou V+Q → tratar como sem filtro por ora
-    sit='';
-    if(sitAtivos.includes('A')&&sitAtivos.includes('V')&&!sitAtivos.includes('Q'))sit='AV';
-    if(sitAtivos.includes('A')&&sitAtivos.includes('Q')&&!sitAtivos.includes('V'))sit='AQ';
-    if(sitAtivos.includes('V')&&sitAtivos.includes('Q')&&!sitAtivos.includes('A'))sit='VQ';
-  }
+  // Envia situações separadas por vírgula para o backend filtrar corretamente
+  var sit=sitAtivos.length>0&&sitAtivos.length<3?sitAtivos.join(','):'';
   var url=API+'/dinheiro?page='+paginaDin+'&limit='+limitDin;
   if(busca)url+='&busca='+encodeURIComponent(busca);
-  if(sit&&sit.length<=1)url+='&situacao='+sit;
-  // Para combinações de 2 situações, filtrar no frontend após receber todos
-  window._dinSitFiltro=sit;
+  if(sit)url+='&situacao='+encodeURIComponent(sit);
   document.getElementById('gridDin').innerHTML='<tr><td colspan="10" style="text-align:center;padding:30px;color:#aaa"><span class="spinner"></span>Carregando...</td></tr>';
   try{
     var r=await fetch(url);var d=await r.json();
     if(d.ok){
-      var rawData=d.data;
-      // Filtro multi-situação no frontend
-      var sf=window._dinSitFiltro||'';
-      if(sf==='AV') rawData=rawData.filter(function(x){return x.situacao!=='Q';});
-      else if(sf==='AQ') rawData=rawData.filter(function(x){return x.situacao==='Q'||(x.situacao==='A'&&!(x.vencimento&&new Date(x.vencimento)<new Date()));});
-      else if(sf==='VQ') rawData=rawData.filter(function(x){return x.situacao==='Q'||(x.situacao==='A'&&x.vencimento&&new Date(x.vencimento)<new Date());});
-      dadosDin=rawData;
+      dadosDin=d.data; // filtros feitos no backend
       dadosDinTotais=d.totais||{capital_aberto:0,total_pago:0,vencidos:0};
       var pag=d.paginacao||{page:1,totalPages:1,total:d.data.length,limit:d.data.length};
       totalPaginasDin=pag.totalPages||1;
