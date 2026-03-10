@@ -200,7 +200,8 @@ async function carregarCafe(pagina,buscaOverride){
     if(d.ok){
       movimentos=d.data;
       var pag=d.paginacao||{page:1,totalPages:1,total:d.data.length,limit:d.data.length};
-      totalPaginasCafe=pag.totalPages;
+      totalPaginasCafe=pag.totalPages||1;
+      if(paginaCafe>totalPaginasCafe&&totalPaginasCafe>1){paginaCafe=totalPaginasCafe;carregarCafe();return;}
       renderCafe();renderPaginacaoCafe(pag);
     }else{
       document.getElementById('gridCafe').innerHTML='<tr><td colspan="11" style="text-align:center;padding:20px;color:#c62828">Erro: '+(d.erro||'desconhecido')+'</td></tr>';
@@ -299,20 +300,25 @@ function filtrarCafe(){
 function renderPaginacaoCafe(pag){
   var footer=document.getElementById('footerPagCafe');
   if(!footer||!pag)return;
-  var p=pag.page,t=pag.totalPages,total=pag.total;
-  var h='<div style="display:flex;align-items:center;gap:4px">';
-  h+='<select class="pg-sel" onchange="limitCafe=parseInt(this.value);paginaCafe=1;carregarCafe(1)" style="margin-right:6px">';
-  [20,50,100,200].forEach(function(n){h+='<option value="'+n+'"'+(limitCafe===n?' selected':'')+'>'+n+'/pág</option>';});
+  var p=pag.page,t=pag.totalPages||1,total=pag.total;
+  var mob=window.innerWidth<768;
+  var h='<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">';
+  h+='<select class="pg-sel" onchange="limitCafe=parseInt(this.value);paginaCafe=1;carregarCafe(1)">';
+  [20,50,100].forEach(function(n){h+='<option value="'+n+'"'+(limitCafe===n?' selected':'')+'>'+n+'/pág</option>';});
   h+='</select>';
-  h+='<button class="pg-btn" '+(p<=1?'disabled':'')+' onclick="carregarCafe(1)" title="Primeira"><i class="fas fa-angle-double-left"></i></button>';
-  h+='<button class="pg-btn" '+(p<=1?'disabled':'')+' onclick="carregarCafe('+(p-1)+')" title="Anterior"><i class="fas fa-angle-left"></i></button>';
-  var s=Math.max(1,p-2),e=Math.min(t,p+2);
-  if(s>1){h+='<button class="pg-btn" onclick="carregarCafe(1)">1</button>';if(s>2)h+='<span class="pg-dots">...</span>';}
-  for(var i=s;i<=e;i++)h+='<button class="pg-btn'+(i===p?' pg-active':'')+'" onclick="carregarCafe('+i+')">'+i+'</button>';
-  if(e<t){if(e<t-1)h+='<span class="pg-dots">...</span>';h+='<button class="pg-btn" onclick="carregarCafe('+t+')">'+t+'</button>';}
-  h+='<button class="pg-btn" '+(p>=t?'disabled':'')+' onclick="carregarCafe('+(p+1)+')" title="Próxima"><i class="fas fa-angle-right"></i></button>';
-  h+='<button class="pg-btn" '+(p>=t?'disabled':'')+' onclick="carregarCafe('+t+')" title="Última"><i class="fas fa-angle-double-right"></i></button>';
-  h+='<span style="margin-left:8px;font-size:11px;color:#888">Total: <b style="color:#00838f">'+total+'</b> regs</span>';
+  h+='<button class="pg-btn" '+(p<=1?'disabled':'')+' onclick="carregarCafe(1)"><i class="fas fa-angle-double-left"></i></button>';
+  h+='<button class="pg-btn" '+(p<=1?'disabled':'')+' onclick="carregarCafe('+(p-1)+')"><i class="fas fa-angle-left"></i></button>';
+  if(mob){
+    h+='<span style="padding:0 8px;font-size:13px;font-weight:700;color:#00838f">'+p+' / '+t+'</span>';
+  } else {
+    var s=Math.max(1,p-2),e=Math.min(t,p+2);
+    if(s>1){h+='<button class="pg-btn" onclick="carregarCafe(1)">1</button>';if(s>2)h+='<span class="pg-dots">...</span>';}
+    for(var i=s;i<=e;i++)h+='<button class="pg-btn'+(i===p?' pg-active':'')+'" onclick="carregarCafe('+i+')">'+i+'</button>';
+    if(e<t){if(e<t-1)h+='<span class="pg-dots">...</span>';h+='<button class="pg-btn" onclick="carregarCafe('+t+')">'+t+'</button>';}
+  }
+  h+='<button class="pg-btn" '+(p>=t?'disabled':'')+' onclick="carregarCafe('+(p+1)+')"><i class="fas fa-angle-right"></i></button>';
+  h+='<button class="pg-btn" '+(p>=t?'disabled':'')+' onclick="carregarCafe('+t+')"><i class="fas fa-angle-double-right"></i></button>';
+  h+='<span style="margin-left:6px;font-size:11px;color:#888">Total: <b style="color:#00838f">'+total+'</b></span>';
   h+='</div>';
   footer.innerHTML=h;
 }
@@ -545,7 +551,8 @@ async function carregarDin(pagina,buscaOverride){
       dadosDin=rawData;
       dadosDinTotais=d.totais||{capital_aberto:0,total_pago:0,vencidos:0};
       var pag=d.paginacao||{page:1,totalPages:1,total:d.data.length,limit:d.data.length};
-      totalPaginasDin=pag.totalPages;
+      totalPaginasDin=pag.totalPages||1;
+      if(paginaDin>totalPaginasDin&&totalPaginasDin>1){paginaDin=totalPaginasDin;carregarDin();return;}
       renderDin();renderPaginacaoDin(pag);
     }else toast('Erro: '+d.erro,'error');
   }catch(e){document.getElementById('gridDin').innerHTML='<tr><td colspan="10" style="color:#c62828;padding:20px;text-align:center">Servidor nao encontrado.</td></tr>';}
@@ -606,24 +613,28 @@ function renderDin(){
 function renderPaginacaoDin(pag){
   var footer=document.getElementById('footerPagDin');
   if(!footer||!pag)return;
-  var p=pag.page,t=pag.totalPages,total=pag.total;
-  var h='<div style="display:flex;align-items:center;gap:4px">';
-  h+='<select class="pg-sel" onchange="limitDin=parseInt(this.value);paginaDin=1;carregarDin(1)" style="margin-right:6px">';
-  [20,50,100,200].forEach(function(n){h+='<option value="'+n+'"'+(limitDin===n?' selected':'')+'>'+n+'/pág</option>';});
+  var p=pag.page,t=pag.totalPages||1,total=pag.total;
+  var mob=window.innerWidth<768;
+  var h='<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">';
+  h+='<select class="pg-sel" onchange="limitDin=parseInt(this.value);paginaDin=1;carregarDin(1)">';
+  [20,50,100].forEach(function(n){h+='<option value="'+n+'"'+(limitDin===n?' selected':'')+'>'+n+'/pág</option>';});
   h+='</select>';
-  h+='<button class="pg-btn" '+(p<=1?'disabled':'')+' onclick="carregarDin(1)" title="Primeira"><i class="fas fa-angle-double-left"></i></button>';
-  h+='<button class="pg-btn" '+(p<=1?'disabled':'')+' onclick="carregarDin('+(p-1)+')" title="Anterior"><i class="fas fa-angle-left"></i></button>';
-  var s=Math.max(1,p-2),e=Math.min(t,p+2);
-  if(s>1){h+='<button class="pg-btn" onclick="carregarDin(1)">1</button>';if(s>2)h+='<span class="pg-dots">...</span>';}
-  for(var i=s;i<=e;i++)h+='<button class="pg-btn'+(i===p?' pg-active':'')+'" onclick="carregarDin('+i+')">'+i+'</button>';
-  if(e<t){if(e<t-1)h+='<span class="pg-dots">...</span>';h+='<button class="pg-btn" onclick="carregarDin('+t+')">'+t+'</button>';}
-  h+='<button class="pg-btn" '+(p>=t?'disabled':'')+' onclick="carregarDin('+(p+1)+')" title="Próxima"><i class="fas fa-angle-right"></i></button>';
-  h+='<button class="pg-btn" '+(p>=t?'disabled':'')+' onclick="carregarDin('+t+')" title="Última"><i class="fas fa-angle-double-right"></i></button>';
-  h+='<span style="margin-left:8px;font-size:11px;color:#888">Total: <b style="color:#00838f">'+total+'</b> regs</span>';
+  h+='<button class="pg-btn" '+(p<=1?'disabled':'')+' onclick="carregarDin(1)"><i class="fas fa-angle-double-left"></i></button>';
+  h+='<button class="pg-btn" '+(p<=1?'disabled':'')+' onclick="carregarDin('+(p-1)+')"><i class="fas fa-angle-left"></i></button>';
+  if(mob){
+    h+='<span style="padding:0 8px;font-size:13px;font-weight:700;color:#00838f">'+p+' / '+t+'</span>';
+  } else {
+    var s=Math.max(1,p-2),e=Math.min(t,p+2);
+    if(s>1){h+='<button class="pg-btn" onclick="carregarDin(1)">1</button>';if(s>2)h+='<span class="pg-dots">...</span>';}
+    for(var i=s;i<=e;i++)h+='<button class="pg-btn'+(i===p?' pg-active':'')+'" onclick="carregarDin('+i+')">'+i+'</button>';
+    if(e<t){if(e<t-1)h+='<span class="pg-dots">...</span>';h+='<button class="pg-btn" onclick="carregarDin('+t+')">'+t+'</button>';}
+  }
+  h+='<button class="pg-btn" '+(p>=t?'disabled':'')+' onclick="carregarDin('+(p+1)+')"><i class="fas fa-angle-right"></i></button>';
+  h+='<button class="pg-btn" '+(p>=t?'disabled':'')+' onclick="carregarDin('+t+')"><i class="fas fa-angle-double-right"></i></button>';
+  h+='<span style="margin-left:6px;font-size:11px;color:#888">Total: <b style="color:#00838f">'+total+'</b></span>';
   h+='</div>';
   footer.innerHTML=h;
 }
-
 function selecionarDin(id){
   selDin=id;
   var din=dadosDin.find(function(d){return d.id===id;});
