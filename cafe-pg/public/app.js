@@ -752,6 +752,10 @@ async function carregarDashboard(){
       document.getElementById('dshPagoSub').textContent=fmtBRL(d4.data.total_capital-d4.data.total_pago)+' em aberto';
       document.getElementById('dshVencidos').textContent=d4.data.total_vencidos;
       document.getElementById('dshVencSub').textContent='emprestimos em atraso';
+      document.getElementById('dshCapQuitado').textContent=fmtBRL(d4.data.total_capital_quitado);
+      document.getElementById('dshCapQuitadoSub').textContent=d4.data.total_quitados+' empréstimos quitados';
+      document.getElementById('dshPagoQuitado').textContent=fmtBRL(d4.data.total_pago_quitado);
+      document.getElementById('dshPagoQuitadoSub').textContent='total recebido dos quitados';
     }
   }catch(e){console.error('Dashboard erro:',e);}
 }
