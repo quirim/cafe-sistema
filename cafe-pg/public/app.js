@@ -236,7 +236,7 @@ function renderCafe(){
       h+='<tr class="'+(sel?'selected':'')+' mob-card-row" onclick="selecionarCafe('+d.movimento_id+')" ondblclick="editarMovId('+d.movimento_id+')">';
       h+='<td colspan="11" style="padding:10px 12px">';
       h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
-      h+='<span style="font-weight:700;font-size:13px">'+(d.cliente_nome||'-')+'</span>';
+      h+='<div style="display:flex;align-items:center;gap:7px"><span style="font-size:10px;color:#aaa;font-weight:600">#'+String(d.movimento_id).padStart(4,'0')+'</span><span style="font-weight:700;font-size:13px">'+(d.cliente_nome||'-')+'</span></div>';
       h+=badge;
       h+='</div>';
       h+='<div style="display:flex;justify-content:space-between;font-size:12px;color:#555">';
