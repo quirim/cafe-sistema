@@ -87,9 +87,12 @@ router.get('/stats', async (req, res) => {
       SELECT
         COUNT(*)                                                                       AS total_registros,
         COUNT(CASE WHEN e.situacao != 'Q' THEN 1 END)                                AS total_abertos,
-        COALESCE(SUM(CASE WHEN e.situacao != 'Q' THEN e.capital ELSE 0 END), 0)      AS total_capital,
-        COALESCE(SUM(COALESCE(pag.total_pago, 0)), 0)                                 AS total_pago,
-        COUNT(CASE WHEN e.situacao='A' AND e.vencimento < CURRENT_DATE THEN 1 END)   AS total_vencidos
+        COALESCE(SUM(CASE WHEN e.situacao != 'Q' THEN e.capital ELSE 0 END), 0)                         AS total_capital,
+        COALESCE(SUM(CASE WHEN e.situacao != 'Q' THEN COALESCE(pag.total_pago, 0) ELSE 0 END), 0)      AS total_pago,
+        COUNT(CASE WHEN e.situacao='A' AND e.vencimento < CURRENT_DATE THEN 1 END)                      AS total_vencidos,
+        COALESCE(SUM(CASE WHEN e.situacao = 'Q' THEN e.capital ELSE 0 END), 0)                          AS total_capital_quitado,
+        COALESCE(SUM(CASE WHEN e.situacao = 'Q' THEN COALESCE(pag.total_pago, 0) ELSE 0 END), 0)       AS total_pago_quitado,
+        COUNT(CASE WHEN e.situacao = 'Q' THEN 1 END)                                                    AS total_quitados
       FROM emprestimos_dinheiro e
       LEFT JOIN (SELECT emprestimo_id, SUM(valor) AS total_pago FROM pagamentos_dinheiro GROUP BY emprestimo_id) pag
         ON pag.emprestimo_id = e.id`);
