@@ -159,10 +159,8 @@ function toast(msg,tipo){
 function trocarAba(aba){
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.nav-tab').forEach(function(t){t.classList.remove('active');});
-  document.querySelectorAll('.bottom-nav-item').forEach(function(t){t.classList.remove('active');});
   document.getElementById('page-'+aba).classList.add('active');
   document.getElementById('tab-'+aba).classList.add('active');
-  var bn=document.getElementById('bnav-'+aba);if(bn)bn.classList.add('active');
   if(aba==='dashboard')carregarDashboard();
   if(aba==='cafe')carregarCafe();
   if(aba==='dinheiro')carregarDin();
@@ -541,11 +539,12 @@ function renderDin(){
       h+='<span>Capital: <b>'+fmtBRL(d.capital)+'</b></span>';
       h+='<span style="color:#2e7d32">Pago: <b>'+fmtBRL(d.total_pago)+'</b></span>';
       h+='</div>';
-      h+='<div style="font-size:11px;color:#888;margin-top:3px">';
-      if(d.data)h+='<span>📅 '+fmtData(d.data)+'</span>';
-      if(d.vencimento)h+='<span style="margin-left:8px;'+(vencido?'color:#c62828;font-weight:700':'')+'">Venc: '+fmtData(d.vencimento)+'</span>';
-      if(d.descricao)h+='<span style="margin-left:8px">'+(d.descricao.length>25?d.descricao.substring(0,25)+'...':d.descricao)+'</span>';
-      h+='</div>';
+      if(d.vencimento||d.descricao){
+        h+='<div style="font-size:11px;color:#888;margin-top:3px">';
+        if(d.vencimento)h+='<span style="'+(vencido?'color:#c62828;font-weight:700':'')+'">Venc: '+fmtData(d.vencimento)+'</span>';
+        if(d.descricao)h+='<span style="margin-left:8px">'+(d.descricao.length>30?d.descricao.substring(0,30)+'...':d.descricao)+'</span>';
+        h+='</div>';
+      }
       h+='</td></tr>';
     }else{
       h+='<tr class="'+(sel?'selected':'')+'" onclick="selecionarDin('+d.id+')" ondblclick="editarDinId('+d.id+')">';
@@ -563,10 +562,10 @@ function renderDin(){
     }
   }
   tbody.innerHTML=h;
-  var tc=dadosDin.filter(function(d){return d.situacao!=='Q';}).reduce(function(a,d){return a+(parseFloat(d.capital)||0);},0);
+  var ts=dadosDin.reduce(function(a,d){return a+(parseFloat(d.saldo_devedor)||0);},0);
   var venc=dadosDin.filter(function(d){return d.situacao==='A'&&d.vencimento&&new Date(d.vencimento)<new Date();}).length;
   document.getElementById('ftDinTotal').textContent='Registros: '+lista.length;
-  document.getElementById('ftDinSaldo').textContent='Capital: '+fmtBRL(tc);
+  document.getElementById('ftDinSaldo').textContent='Saldo Total: '+fmtBRL(ts);
   document.getElementById('ftDinVenc').textContent='Vencidos: '+venc;
 }
 
@@ -647,7 +646,7 @@ function abrirPagModal(){
   if(!selDin)return toast('Selecione um emprestimo!','warn');
   var din=dadosDin.find(function(d){return d.id===selDin;});
   document.getElementById('pagCli').textContent=din?din.cliente_nome:'-';
-  document.getElementById('pagSaldo').textContent=fmtBRL(din?din.capital:0);
+  document.getElementById('pagSaldo').textContent=fmtBRL(din?din.saldo_devedor:0);
   document.getElementById('pagData').value=hoje();
   document.getElementById('pagValor').value='';
   document.getElementById('pagDesc').value='';
@@ -769,34 +768,15 @@ function renderCli(){
   var tbody=document.getElementById('gridCli');
   if(!lista.length){tbody.innerHTML='<tr class="empty-row"><td colspan="8">Nenhum cliente.</td></tr>';return;}
   var h='';
-  var mob=window.innerWidth<=768;
   for(var i=0;i<lista.length;i++){
-    var c=lista[i];var sel=selCli===c.cliente_id;
-    if(mob){
-      var ativo=c.ativo!==false&&c.ativo!==0;
-      h+='<tr class="mob-card-row'+(sel?' selected':'')+'" onclick="selecionarCli('+c.cliente_id+')" ondblclick="editarCliId('+c.cliente_id+')">';
-      h+='<td colspan="8" style="padding:11px 14px">';
-      h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">';
-      h+='<span style="font-weight:700;font-size:14px;color:#222">'+(c.nome||'')+'</span>';
-      h+='<span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;background:'+(ativo?'#e0f7fa':'#eee')+';color:'+(ativo?'#00838f':'#999')+'">'+(ativo?'Ativo':'Inativo')+'</span>';
-      h+='</div>';
-      if(c.documento||c.telefone){
-        h+='<div style="display:flex;gap:14px;font-size:12px;color:#666;flex-wrap:wrap">';
-        if(c.documento)h+='<span><i class="fas fa-id-card" style="color:#00acc1;margin-right:4px"></i>'+c.documento+'</span>';
-        if(c.telefone)h+='<span><i class="fas fa-phone" style="color:#00acc1;margin-right:4px"></i>'+c.telefone+'</span>';
-        h+='</div>';
-      }
-      if(c.email)h+='<div style="font-size:11px;color:#aaa;margin-top:3px"><i class="fas fa-envelope" style="margin-right:4px"></i>'+c.email+'</div>';
-      h+='</td></tr>';
-    }else{
-      h+='<tr class="'+(sel?' selected':'')+' " onclick="selecionarCli('+c.cliente_id+')" ondblclick="editarCliId('+c.cliente_id+')">';
-      h+='<td><input type="checkbox" '+(sel?'checked':'')+'></td>';
-      h+='<td>'+String(c.cliente_id).padStart(6,'0')+'</td>';
-      h+='<td><b>'+(c.nome||'')+'</b></td><td>'+(c.documento||'')+'</td><td>'+(c.telefone||'')+'</td><td>'+(c.email||'')+'</td>';
-      h+='<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">'+(c.endereco||'')+'</td>';
-      h+='<td><span class="badge '+(c.ativo?'bc':'bv')+'">'+(c.ativo?'Ativo':'Inativo')+'</span></td>';
-      h+='</tr>';
-    }
+    var c=lista[i];var sel=selCli===c.cliente_id?' selected':'';
+    h+='<tr class="'+sel+'" onclick="selecionarCli('+c.cliente_id+')" ondblclick="editarCliId('+c.cliente_id+')">';
+    h+='<td><input type="checkbox" '+(selCli===c.cliente_id?'checked':'')+'></td>';
+    h+='<td>'+String(c.cliente_id).padStart(6,'0')+'</td>';
+    h+='<td><b>'+(c.nome||'')+'</b></td><td>'+(c.documento||'')+'</td><td>'+(c.telefone||'')+'</td><td>'+(c.email||'')+'</td>';
+    h+='<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">'+(c.endereco||'')+'</td>';
+    h+='<td><span class="badge '+(c.ativo?'bc':'bv')+'">'+(c.ativo?'Ativo':'Inativo')+'</span></td>';
+    h+='</tr>';
   }
   tbody.innerHTML=h;
   document.getElementById('ftCliTotal').textContent='Clientes: '+lista.length;
@@ -998,12 +978,11 @@ async function carregarDevedoresDin(){
     if(!d.ok){area.innerHTML='<div style="color:#c62828;padding:20px">Erro: '+d.erro+'</div>';return;}
     var rows=d.data.filter(function(x){return x.situacao!=='Q'&&(parseFloat(x.saldo_devedor)||0)>0;});
     rows.sort(function(a,b){return (parseFloat(b.saldo_devedor)||0)-(parseFloat(a.saldo_devedor)||0);});
-    var totalCapital=rows.reduce(function(s,r){return s+(parseFloat(r.capital)||0);},0);
-    var totalJurosPago=rows.reduce(function(s,r){var juros=(parseFloat(r.capital)||0)*(parseFloat(r.juros_pct)||0)/100;return s+Math.min(parseFloat(r.total_pago)||0,juros);},0);
+    var totalSaldo=rows.reduce(function(s,r){return s+(parseFloat(r.saldo_devedor)||0);},0);
     if(!rows.length){area.innerHTML='<div style="text-align:center;padding:40px;color:#aaa">Nenhum devedor encontrado.</div>';return;}
     var h='';
     if(isMobile()){
-      h='<div style="padding:12px"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:10px;background:#f8f8f8;border-radius:8px;padding:10px"><span style="font-size:12px;color:#555">'+rows.length+' devedor(es)</span><span style="font-size:12px;font-weight:700;color:#1565c0">Capital: '+fmtBRL(totalCapital)+'</span><span style="font-size:12px;font-weight:700;color:#2e7d32">Juros Pago: '+fmtBRL(totalJurosPago)+'</span></div>';
+      h='<div style="padding:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px"><span style="font-size:13px;color:#666">'+rows.length+' devedor(es)</span><span style="font-size:14px;font-weight:700;color:#c62828">Total: '+fmtBRL(totalSaldo)+'</span></div>';
       rows.forEach(function(x){
         var hoje=new Date();hoje.setHours(0,0,0,0);
         var vencido=x.vencimento&&new Date(x.vencimento+'T12:00:00')<hoje;
@@ -1016,7 +995,7 @@ async function carregarDevedoresDin(){
         if(x.descricao)h+='<div style="font-size:11px;color:#aaa;margin-top:2px">'+x.descricao+'</div>';
         h+='</div>';
       });
-      h+='<div style="background:#f0fffe;border-radius:8px;padding:12px 14px;margin-top:4px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-weight:700;font-size:13px"><span style="color:#1565c0">Capital: '+fmtBRL(totalCapital)+'</span><span style="color:#2e7d32">Juros Pago: '+fmtBRL(totalJurosPago)+'</span></div></div>';
+      h+='<div style="background:#fff;border-radius:8px;padding:12px 14px;margin-top:4px;display:flex;justify-content:space-between;font-weight:700;font-size:14px"><span>Total devedor</span><span style="color:#c62828">'+fmtBRL(totalSaldo)+'</span></div></div>';
     } else {
       var agora=new Date();var dataHora=agora.toLocaleDateString('pt-BR')+' às '+agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
       h='<div class="rel-wrap"><div class="rel-topo"><div class="rel-empresa"><h2><i class="fas fa-coffee"></i> EMPRÉSTIMOS &amp; SAFRA</h2><p>Sistema de Controle de Empréstimos de Café</p></div>';
@@ -1032,7 +1011,7 @@ async function carregarDevedoresDin(){
       h+='<div class="rel-rodape">Documento gerado pelo Sistema Empréstimos &amp; Safra — '+dataHora+'</div></div>';
     }
     area.innerHTML=h;
-    document.getElementById('ftRelInfo').textContent=rows.length+' devedores — Capital: '+fmtBRL(totalCapital)+' | Juros Pago: '+fmtBRL(totalJurosPago);
+    document.getElementById('ftRelInfo').textContent=rows.length+' devedores — Total: '+fmtBRL(totalSaldo);
     document.getElementById('btnImprimirRel').style.display='';
   }catch(e){area.innerHTML='<div style="color:#c62828;padding:20px">Erro: '+e.message+'</div>';}
 }
@@ -1323,11 +1302,4 @@ async function carregarVencimentos(){
     area.innerHTML=h;
     document.getElementById('btnImprimirRel').style.display='';
   }catch(e){area.innerHTML='<div style="color:red;padding:20px">Erro de conexão</div>';}
-}
-
-function abrirMenuMais(){
-  document.getElementById('modalMais').style.display='block';
-}
-function fecharMenuMais(){
-  document.getElementById('modalMais').style.display='none';
 }
