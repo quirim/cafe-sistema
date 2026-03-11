@@ -894,7 +894,7 @@ function mostrarRel(tipo){
   document.getElementById('filtrosDin').style.display=tipo==='devedoresDin'?'flex':'none';
   document.getElementById('filtrosPagJuros').style.display=tipo==='pagJuros'?'flex':'none';
   document.getElementById('filtrosVenc').style.display=tipo==='vencimentos'?'flex':'none';
-  document.getElementById('btnImprimirRel').style.display='none';
+  document.getElementById('btnImprimirRel').style.display='none';if(document.getElementById('btnWhatsRel'))document.getElementById('btnWhatsRel').style.display='none';
   if(tipo==='devedores')carregarDevedores();
   if(tipo==='historico'){popularSelectRel();document.getElementById('areaRelatorio').innerHTML='<div style="text-align:center;padding:40px;color:#aaa">Selecione um cliente para ver o histórico</div>';}
   if(tipo==='devedoresDin'){
@@ -1041,7 +1041,31 @@ async function carregarHistorico(){
     area.innerHTML=h;
     document.getElementById('ftRelInfo').textContent=rows.length+' movimentos — '+cliente;
     document.getElementById('btnImprimirRel').style.display='';
+    document.getElementById('btnWhatsRel').style.display='';
+    window._relWhatsData={cliente:cliente,rows:rows,saldoKg:saldoKg,saldoSc:saldoSc,saldoKgR:saldoKgR,totalD:totalD,totalC:totalC};
   }catch(e){area.innerHTML='<div style="color:#c62828;padding:20px">Erro: '+e.message+'</div>';}
+}
+function enviarWhatsApp(){
+  var d=window._relWhatsData;
+  if(!d)return;
+  var txt='*Histórico de Café — '+d.cliente+'*\n';
+  txt+='━━━━━━━━━━━━━━━━━━━━\n';
+  d.rows.forEach(function(r){
+    var base=(parseInt(r.sacas)||0)*60+(parseInt(r.kg_avulso)||0);
+    var total=r.tipo==='D'?(parseInt(r.total_kg_com_juros)||base):base;
+    var tSc=Math.floor(total/60),tKg=total%60;
+    var acum=Math.trunc(parseFloat(r.saldo_acumulado_kg)||0),aSc=Math.floor(acum/60),aKg=acum%60;
+    txt+=(r.tipo==='D'?'📕 D':'📗 C')+' '+fmtData(r.data_movimento)+' → *'+tSc+'sc '+tKg+'kg*';
+    if(r.tipo==='D'&&r.juros_pct)txt+=' ('+r.juros_pct+'% juros)';
+    txt+='\n   Saldo: '+(acum>0?aSc+'sc '+aKg+'kg':' Quitado ✅')+'\n';
+    if(r.observacao)txt+='   _'+r.observacao+'_\n';
+  });
+  txt+='━━━━━━━━━━━━━━━━━━━━\n';
+  txt+='📦 Capital: *'+Math.floor(d.totalD/60)+'sc '+(d.totalD%60)+'kg*\n';
+  txt+='✅ Recebido: *'+Math.floor(d.totalC/60)+'sc '+(d.totalC%60)+'kg*\n';
+  txt+=(d.saldoKg>0?'🔴 *Deve: '+d.saldoSc+'sc '+d.saldoKgR+'kg*':'🟢 *QUITADO*')+'\n';
+  var url='https://api.whatsapp.com/send?text='+encodeURIComponent(txt);
+  window.open(url,'_blank');
 }
 async function carregarDevedoresDin(){
   var area=document.getElementById('areaRelatorio');
@@ -1250,7 +1274,8 @@ function imprimirRelatorio(){
   win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">');
   win.document.write('<title>Relatório</title>');
   win.document.write('<style>');
-  win.document.write('body{font-family:Arial,sans-serif;font-size:11px;margin:10mm;color:#000}');
+  win.document.write('body{font-family:Arial,sans-serif;font-size:13px;margin:10mm;color:#000}');
+  win.document.write('.btn-fechar{position:fixed;top:10px;right:10px;background:#c62828;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:14px;cursor:pointer;z-index:9999;font-weight:700}@media print{.btn-fechar{display:none}}');
   win.document.write('.rel-wrap{width:100%}');
   win.document.write('.rel-topo{display:flex;justify-content:space-between;border-bottom:2px solid #00acc1;padding-bottom:8px;margin-bottom:12px}');
   win.document.write('.rel-empresa h2{font-size:16px;margin:0;color:#00acc1}');
@@ -1258,8 +1283,8 @@ function imprimirRelatorio(){
   win.document.write('.rel-info{font-size:10px;text-align:right;color:#555}');
   win.document.write('.rel-titulo-doc{text-align:center;font-size:14px;font-weight:700;margin:12px 0;text-transform:uppercase;letter-spacing:1px}');
   win.document.write('.rel-table{width:100%;border-collapse:collapse;margin-top:8px}');
-  win.document.write('.rel-table th{background:#00acc1;color:#fff;padding:6px 8px;text-align:left;font-size:10px}');
-  win.document.write('.rel-table td{padding:5px 8px;border-bottom:1px solid #e0e0e0;font-size:10px}');
+  win.document.write('.rel-table th{background:#00acc1;color:#fff;padding:6px 8px;text-align:left;font-size:12px}');
+  win.document.write('.rel-table td{padding:5px 8px;border-bottom:1px solid #e0e0e0;font-size:12px}');
   win.document.write('.rel-table tr:nth-child(even) td{background:#f9f9f9}');
   win.document.write('tfoot td{background:#e0f7fa!important;font-weight:700;border-top:2px solid #00acc1}');
   win.document.write('.rel-assin{display:flex;justify-content:space-around;margin-top:30px;padding-top:10px}');
@@ -1269,6 +1294,7 @@ function imprimirRelatorio(){
   win.document.write('.status-c{background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700}');
   win.document.write('@media print{@page{size:A4;margin:10mm 12mm}body{margin:0}thead{display:table-header-group}tr{page-break-inside:avoid}}');
   win.document.write('</style></head><body>');
+  win.document.write('<button class="btn-fechar" onclick="window.close()">✕ Fechar</button>');
   win.document.write(conteudo);
   win.document.write('</body></html>');
   win.document.close();
